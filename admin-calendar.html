@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIRE YOUR VA - Master Calendar</title>
+    <!-- PWA & iPhone (iOS) Support Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2ecc71">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HireYourVA">
+    <link rel="apple-touch-icon" href="logo.png">
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #1a1a1a; 
+            color: #f5f5dc; 
+            margin: 0; 
+            padding: 0; 
+            font-size: 15px; 
+            padding-bottom: 70px; 
+        }
+
+        .header { 
+            background-color: #242424; 
+            padding: 12px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
+        }
+
+        .header img { 
+            max-height: 45px; 
+            border-radius: 4px; 
+        }
+
+        .btn-back { 
+            background-color: #555; 
+            color: white; 
+            border: none; 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            text-decoration: none; 
+            font-weight: bold; 
+            font-size: 14px; 
+        }
+
+        .btn-back:hover { 
+            background-color: #777; 
+        }
+        
+        .container { 
+            padding: 15px; 
+            max-width: 900px; 
+            margin: 10px auto; 
+            box-sizing: border-box;
+        }
+        
+        /* Calendar UI Styles & Mobile Responsiveness */
+        .calendar-card { 
+            background: #242424; 
+            border-radius: 10px; 
+            border-top: 4px solid #3498db; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); 
+            overflow: hidden;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .cal-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 15px 20px; 
+            background: #1f1f1f;
+            border-bottom: 1px solid #333;
+        }
+
+        .cal-header h2 { 
+            margin: 0; 
+            color: #3498db; 
+            font-size: 20px; 
+        }
+
+        .cal-btn { 
+            background: #333; 
+            color: white; 
+            border: 1px solid #444; 
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 13px;
+        }
+
+        .cal-btn:hover { 
+            background: #444; 
+        }
+
+        .cal-weekdays { 
+            display: grid; 
+            grid-template-columns: repeat(7, minmax(0, 1fr)); 
+            background: #2a2a2a; 
+            text-align: center; 
+            font-weight: bold; 
+            font-size: 12px;
+            color: #aaa;
+            border-bottom: 1px solid #333;
+        }
+
+        .cal-weekdays div { 
+            padding: 8px 0; 
+            border-right: 1px solid #333; 
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cal-weekdays div:last-child { 
+            border-right: none; 
+        }
+
+        .cal-grid { 
+            display: grid; 
+            grid-template-columns: repeat(7, minmax(0, 1fr)); 
+            background: #1a1a1a; 
+            width: 100%;
+        }
+
+        .cal-day { 
+            min-height: 90px; 
+            border-right: 1px solid #333; 
+            border-bottom: 1px solid #333; 
+            padding: 4px; 
+            box-sizing: border-box;
+            background: #242424;
+            transition: background 0.2s;
+            overflow: hidden;
+        }
+
+        .cal-day:hover { 
+            background: #2a2a2a; 
+        }
+
+        .cal-day.empty-day { 
+            background: #1a1a1a; 
+        }
+        
+        .day-number { 
+            font-size: 13px; 
+            font-weight: bold; 
+            color: #ccc; 
+            margin-bottom: 3px;
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            line-height: 22px;
+            text-align: center;
+            border-radius: 50%;
+        }
+
+        .cal-day.today .day-number { 
+            background: #3498db; 
+            color: white; 
+        }
+
+        /* Event Pills with Multi-line Support */
+        .event-pill {
+            font-size: 10px;
+            padding: 3px 4px;
+            border-radius: 3px;
+            margin-bottom: 3px;
+            color: white;
+            font-weight: bold;
+            white-space: pre-line; /* Allows 2 lines using \n */
+            line-height: 1.2;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .event-holiday { background: #9b59b6; border-left: 2px solid #8e44ad; }
+        .event-birthday { background: #f39c12; border-left: 2px solid #d35400; color: #111; }
+        .event-leave { background: #e74c3c; border-left: 2px solid #c0392b; }
+
+        /* Legend */
+        .legend {
+            display: flex; 
+            gap: 12px; 
+            justify-content: center; 
+            padding: 12px; 
+            flex-wrap: wrap;
+            background: #1f1f1f; 
+            border-top: 1px solid #333; 
+            font-size: 12px;
+        }
+
+        .legend-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+            color: #aaa; 
+        }
+
+        .dot { 
+            width: 10px; 
+            height: 10px; 
+            border-radius: 50%; 
+            display: inline-block; 
+        }
+
+        /* Bottom Nav */
+        .bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            background: #242424; 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center; 
+            border-top: 1px solid #333; 
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.5); 
+            z-index: 100; 
+        }
+
+        .nav-item { 
+            flex: 1; 
+            text-align: center; 
+            padding: 12px 0; 
+            color: #aaa; 
+            text-decoration: none; 
+            font-size: 12px; 
+            cursor: pointer; 
+            transition: 0.3s; 
+        }
+
+        .nav-item:hover { 
+            background: #1a1a1a; 
+            color: #fff; 
+        }
+
+        .nav-item.active { 
+            color: #3498db; 
+            border-top: 3px solid #3498db; 
+            margin-top: -3px; 
+            font-weight: bold; 
+        }
+
+        .nav-icon { 
+            font-size: 20px; 
+            display: block; 
+            margin-bottom: 4px; 
+        }
+        
+        /* Loading Overlay */
+        #loadingOverlay {
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background: rgba(36, 36, 36, 0.8); 
+            display: none; 
+            justify-content: center;
+            align-items: center; 
+            font-weight: bold; 
+            color: #3498db; 
+            z-index: 10;
+        }
+        
+        @media (max-width: 450px) {
+            .container { padding: 8px; }
+            .cal-day { min-height: 80px; padding: 2px; }
+            .day-number { width: 18px; height: 18px; font-size: 11px; line-height: 18px; }
+            .event-pill { font-size: 8px; padding: 2px; }
+            .cal-header h2 { font-size: 16px; }
+        }
+    </style>
+    <!-- HYVA professional theme layer (additive; remove these 2 lines to roll back) -->
+    <link rel="stylesheet" href="hyva-theme.css">
+    <script src="hyva-motion.js"></script>
+</head>
+<body>
+
+    <div class="header">
+        <img src="logo.png" alt="Hire Your VA" onerror="this.style.display='none'">
+        <a href="admin-dashboard.html" class="btn-back">Dashboard</a>
+    </div>
+
+    <div class="container">
+        <div class="calendar-card" style="position: relative;">
+            <div id="loadingOverlay">Syncing Data...</div>
+            
+            <div class="cal-header">
+                <button class="cal-btn" id="prevMonthBtn">◀ Prev</button>
+                <h2 id="monthYearDisplay">Loading...</h2>
+                <button class="cal-btn" id="nextMonthBtn">Next ▶</button>
+            </div>
+            
+            <div class="cal-weekdays">
+                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+            </div>
+            
+            <div class="cal-grid" id="calendarGrid">
+                <!-- Days generated by JS -->
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item"><span class="dot" style="background: #9b59b6;"></span> Company Holiday</div>
+                <div class="legend-item"><span class="dot" style="background: #f39c12;"></span> Birthday</div>
+                <div class="legend-item"><span class="dot" style="background: #e74c3c;"></span> Approved Leave</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Bottom Navigation Bar -->
+    <div class="bottom-nav">
+        <div class="nav-item" onclick="window.location.href='admin-dashboard.html'">
+            <span class="nav-icon">🏠</span>
+            Home
+        </div>
+        <div class="nav-item" onclick="window.location.href='admin-employees.html'">
+            <span class="nav-icon">👥</span>
+            Employees
+        </div>
+        <div class="nav-item active">
+            <span class="nav-icon">📆</span>
+            Calendar
+        </div>
+        <div class="nav-item" onclick="window.location.href='admin-leaves.html'">
+            <span class="nav-icon">📅</span>
+            Leaves
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAw8NhVWaoMbm-CiED4M_K02wOSRtV2LUc",
+            authDomain: "hire-your-va-hr.firebaseapp.com",
+            projectId: "hire-your-va-hr",
+            storageBucket: "hire-your-va-hr.firebasestorage.app",
+            messagingSenderId: "75356368308",
+            appId: "1:75356368308:web:be5c4cfaa62c72efced6e1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        let allEvents = {}; 
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "index.html";
+            } else {
+                fetchAllCalendarData();
+            }
+        });
+
+        function addEvent(dateStr, title, type) {
+            if (!allEvents[dateStr]) {
+                allEvents[dateStr] = [];
+            }
+            allEvents[dateStr].push({ title, type });
+        }
+
+        function getDatesInRange(startStr, endStr) {
+            let dates = [];
+            let curr = new Date(startStr);
+            let end = new Date(endStr);
+            while (curr <= end) {
+                dates.push(`${curr.getFullYear()}-${String(curr.getMonth() + 1).padStart(2, '0')}-${String(curr.getDate()).padStart(2, '0')}`);
+                curr.setDate(curr.getDate() + 1);
+            }
+            return dates;
+        }
+
+        async function fetchAllCalendarData() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            allEvents = {}; 
+
+            try {
+                const employeeMap = {};
+                const empSnap = await getDocs(collection(db, "employees"));
+                empSnap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    employeeMap[docSnap.id] = data.name && data.name !== "undefined" ? data.name : (data.email || "Employee");
+                    
+                    if(data.dob && data.role !== "ADMIN") {
+                        const parts = data.dob.split('-'); 
+                        if(parts.length === 3) {
+                            const bdayThisYear = `${currentYear}-${parts[1]}-${parts[2]}`;
+                            const empName = employeeMap[docSnap.id];
+                            addEvent(bdayThisYear, `🎂 ${empName}\nB'day`, 'birthday');
+                        }
+                    }
+                });
+
+                const holSnap = await getDocs(collection(db, "holidays"));
+                holSnap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if(data.date) {
+                        addEvent(data.date, `🏖️ ${data.name || 'Holiday'}`, 'holiday');
+                    }
+                });
+
+                const qLeaves = query(collection(db, "leaves"), where("status", "==", "APPROVED"));
+                const leaveSnap = await getDocs(qLeaves);
+                leaveSnap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const empName = employeeMap[data.uid] || data.name || 'Employee';
+                    
+                    if (data.fromDate && data.toDate) {
+                        const range = getDatesInRange(data.fromDate, data.toDate);
+                        range.forEach(dateStr => {
+                            // 2 lines format: Upar naam, niche Leave
+                            addEvent(dateStr, `${empName}\n🌴 Leave`, 'leave');
+                        });
+                    } else if (data.date) {
+                        addEvent(data.date, `${empName}\n🌴 Leave`, 'leave');
+                    }
+                });
+
+                renderCalendar();
+            } catch (error) {
+                console.error("Sync Error:", error);
+                alert("Failed to sync calendar: " + error.message);
+            }
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const monthYearDisplay = document.getElementById('monthYearDisplay');
+            grid.innerHTML = "";
+
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            monthYearDisplay.innerText = `${months[currentMonth]} ${currentYear}`;
+
+            const firstDay = new Date(Date.UTC(currentYear, currentMonth, 1)).getUTCDay();
+            const daysInMonth = new Date(Date.UTC(currentYear, currentMonth + 1, 0)).getUTCDate();
+            
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'cal-day empty-day';
+                grid.appendChild(emptyDiv);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'cal-day';
+                
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                if (dateStr === todayStr) {
+                    dayDiv.classList.add('today');
+                }
+
+                let html = `<span class="day-number">${day}</span>`;
+                
+                if (allEvents[dateStr]) {
+                    allEvents[dateStr].forEach(ev => {
+                        html += `<div class="event-pill event-${ev.type}" title="${ev.title}">${ev.title}</div>`;
+                    });
+                }
+                
+                dayDiv.innerHTML = html;
+                grid.appendChild(dayDiv);
+            }
+        }
+
+        document.getElementById('prevMonthBtn').addEventListener('click', () => {
+            currentMonth--;
+            if (currentMonth < 0) { 
+                currentMonth = 11; 
+                currentYear--; 
+            }
+            fetchAllCalendarData(); 
+        });
+
+        document.getElementById('nextMonthBtn').addEventListener('click', () => {
+            currentMonth++;
+            if (currentMonth > 11) { 
+                currentMonth = 0; 
+                currentYear++; 
+            }
+            fetchAllCalendarData(); 
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIRE YOUR VA - Manage Employees</title>
+    <!-- PWA & iPhone (iOS) Support Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2ecc71">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HireYourVA">
+    <link rel="apple-touch-icon" href="logo.png">
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #1a1a1a; 
+            color: #f5f5dc; 
+            margin: 0; 
+            padding: 0; 
+            font-size: 15px; 
+            padding-bottom: 70px; /* Space for bottom nav */
+        }
+
+        .header { 
+            background-color: #242424; 
+            padding: 12px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
+        }
+
+        .header img { 
+            max-height: 45px; 
+            border-radius: 4px; 
+        }
+
+        .btn-back { 
+            background-color: #555; 
+            color: white; 
+            border: none; 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            text-decoration: none; 
+            font-weight: bold; 
+            font-size: 14px; 
+        }
+
+        .btn-back:hover { 
+            background-color: #777; 
+        }
+        
+        .container { 
+            padding: 15px; 
+            max-width: 800px; 
+            margin: 10px auto; 
+        }
+
+        .card { 
+            background: #242424; 
+            padding: 20px; 
+            border-radius: 10px; 
+            border-top: 4px solid #2ecc71; 
+            margin-bottom: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); 
+        }
+
+        h2 { 
+            margin-top: 0; 
+            color: #2ecc71; 
+            font-size: 20px; 
+            border-bottom: 2px solid #333; 
+            padding-bottom: 8px; 
+        }
+        
+        .form-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px; 
+        }
+
+        @media (max-width: 600px) { 
+            .form-grid { 
+                grid-template-columns: 1fr; 
+                gap: 10px; 
+            } 
+        }
+        
+        .input-group { 
+            display: flex; 
+            flex-direction: column; 
+            text-align: left; 
+        }
+
+        label { 
+            font-size: 13px; 
+            color: #aaa; 
+            margin-bottom: 4px; 
+            font-weight: 500; 
+        }
+
+        input, select, textarea { 
+            padding: 10px; 
+            border: 1px solid #444; 
+            border-radius: 6px; 
+            background-color: #333; 
+            color: white; 
+            font-size: 14px; 
+            width: 100%; 
+            box-sizing: border-box; 
+        }
+        
+        button.submit-btn { 
+            width: 100%; 
+            padding: 12px; 
+            background-color: #2ecc71; 
+            color: #111; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 15px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 15px; 
+            transition: 0.3s; 
+        }
+
+        button.submit-btn:hover { 
+            background-color: #27ae60; 
+        }
+
+        button:disabled { 
+            background-color: #555; 
+            cursor: not-allowed; 
+        }
+
+        #statusMsg { 
+            text-align: center; 
+            margin-top: 10px; 
+            font-weight: bold; 
+            font-size: 14px; 
+        }
+        
+        .section-title { 
+            grid-column: 1 / -1; 
+            margin-top: 8px; 
+            color: #2ecc71; 
+            border-bottom: 1px solid #444; 
+            padding-bottom: 4px; 
+            font-size: 15px; 
+            font-weight: bold; 
+        }
+        
+        /* Employee List Grid */
+        .emp-list-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
+            gap: 12px; 
+            margin-top: 15px; 
+        }
+
+        .emp-item { 
+            background: #1a1a1a; 
+            padding: 12px; 
+            border-radius: 8px; 
+            border-left: 4px solid #2ecc71; 
+            position: relative; 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        .emp-item.blocked { 
+            border-left-color: #e74c3c; 
+            opacity: 0.7; 
+        }
+
+        .emp-item h4 { 
+            margin: 0 0 4px 0; 
+            color: #fff; 
+            font-size: 15px; 
+        }
+
+        .emp-item p { 
+            margin: 2px 0; 
+            font-size: 12px; 
+            color: #aaa; 
+        }
+        
+        .action-buttons { 
+            margin-top: auto; 
+            padding-top: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px; 
+        }
+
+        .btn-toggle { 
+            width: 100%; 
+            padding: 6px; 
+            border: none; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 12px; 
+        }
+
+        .btn-block { background: #e74c3c; color: white; }
+        .btn-unblock { background: #2ecc71; color: #111; }
+        
+        .btn-edit { 
+            background: #3498db; 
+            color: white; 
+            border: none; 
+            padding: 6px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 12px; 
+            width: 100%; 
+        }
+
+        .btn-edit:hover { 
+            background: #2980b9; 
+        }
+
+        .btn-delete { 
+            background: #c0392b; 
+            color: white; 
+            border: none; 
+            padding: 6px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 12px; 
+            width: 100%; 
+        }
+
+        .btn-delete:hover { 
+            background: #a93226; 
+        }
+
+        /* Edit Modal Styles */
+        .modal-overlay { 
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.8); 
+            justify-content: center; 
+            align-items: center; 
+            padding: 15px; 
+            box-sizing: border-box; 
+        }
+
+        .modal-content { 
+            background: #242424; 
+            padding: 20px; 
+            border-radius: 10px; 
+            border-top: 4px solid #3498db; 
+            width: 100%; 
+            max-width: 600px; 
+            max-height: 90vh; 
+            overflow-y: auto; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+        }
+
+        .modal-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 15px; 
+            border-bottom: 1px solid #444; 
+            padding-bottom: 10px; 
+        }
+
+        .modal-header h3 { 
+            margin: 0; 
+            color: #3498db; 
+        }
+
+        .close-btn { 
+            background: transparent; 
+            color: #aaa; 
+            border: none; 
+            font-size: 24px; 
+            cursor: pointer; 
+            line-height: 1; 
+            padding: 0; 
+        }
+
+        .close-btn:hover { 
+            color: #fff; 
+        }
+
+        /* Custom Popup Box */
+        .custom-popup-box {
+            background: #242424;
+            padding: 25px 20px;
+            border-radius: 12px;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+            border-top: 5px solid #2ecc71;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            box-sizing: border-box;
+        }
+
+        .custom-popup-box h3 {
+            margin-top: 0;
+            color: #f5f5dc;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .custom-popup-box p {
+            color: #ccc;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .custom-popup-btns {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-confirm-ok {
+            flex: 1;
+            background: #2ecc71;
+            color: #111;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-confirm-cancel {
+            flex: 1;
+            background: #444;
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* Bottom Navigation Bar for Admin */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #242424;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid #333;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            color: #aaa;
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .nav-item:hover {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .nav-item.active {
+            color: #2ecc71;
+            border-top: 3px solid #2ecc71;
+            margin-top: -3px;
+            font-weight: bold;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            display: block;
+            margin-bottom: 4px;
+        }
+    </style>
+    <!-- HYVA professional theme layer (additive; remove these 2 lines to roll back) -->
+    <link rel="stylesheet" href="hyva-theme.css">
+    <script src="hyva-motion.js"></script>
+</head>
+<body>
+
+    <div class="header">
+        <img src="logo.png" alt="Hire Your VA" onerror="this.style.display='none'">
+        <a href="admin-dashboard.html" class="btn-back">Dashboard</a>
+    </div>
+
+    <!-- CUSTOM POPUP DIALOG -->
+    <div id="customPopupModal" class="modal-overlay" style="z-index: 1000000000;">
+        <div class="custom-popup-box" id="customPopupBorder">
+            <h3 id="customPopupTitle">Confirmation</h3>
+            <p id="customPopupMsg">Are you sure?</p>
+            <div class="custom-popup-btns">
+                <button id="customPopupCancelBtn" class="btn-confirm-cancel">Cancel</button>
+                <button id="customPopupOkBtn" class="btn-confirm-ok">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Add Employee Form Card -->
+        <div class="card">
+            <h2>Add New Employee</h2>
+            <p style="font-size: 12px; color: #aaa; margin-top: -4px; margin-bottom: 15px;">
+                Create login credentials and save profile automatically.
+            </p>
+            
+            <form id="addEmployeeForm">
+                <div class="form-grid">
+                    <div class="section-title">Login Credentials</div>
+                    <div class="input-group">
+                        <label>Email ID (For Login)</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Set Temporary Password</label>
+                        <input type="text" id="password" placeholder="Min 6 characters" required minlength="6">
+                    </div>
+
+                    <div class="section-title">Work & Profile Details</div>
+                    <div class="input-group">
+                        <label>Employee ID</label>
+                        <input type="text" id="empId" placeholder="e.g., HYVA-001" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" id="name" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Phone Number</label>
+                        <input type="text" id="phone" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Department</label>
+                        <input type="text" id="department" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Designation</label>
+                        <input type="text" id="designation" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Shift Timings</label>
+                        <input type="text" id="shiftTiming" placeholder="e.g., 09:00 AM - 06:00 PM" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Base Monthly Salary (₹)</label>
+                        <input type="number" id="salary" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Date of Birth (DOB)</label>
+                        <input type="date" id="dob" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Date of Joining (DOJ)</label>
+                        <input type="date" id="doj" required>
+                    </div>
+                </div>
+                
+                <div class="input-group" style="margin-top: 12px;">
+                    <label>Full Address</label>
+                    <textarea id="address" rows="2" required></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">Create Employee Account</button>
+                <div id="statusMsg"></div>
+            </form>
+        </div>
+
+        <!-- Existing Employees Directory & Block Controls -->
+        <div class="card" style="border-top-color: #3498db;">
+            <h2 style="color: #3498db; font-size: 20px;">Active & Terminated Employees</h2>
+            <div id="employeesDirectory">
+                <p style="color: #aaa; text-align: center;">Loading directory...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Employee Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Employee Profile</h3>
+                <button class="close-btn" onclick="closeEditModal()">&times;</button>
+            </div>
+            
+            <form id="editEmployeeForm">
+                <input type="hidden" id="editUid">
+                
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Employee ID</label>
+                        <input type="text" id="editEmpId" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Email Address</label>
+                        <input type="email" id="editEmail" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" id="editName" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Phone Number</label>
+                        <input type="text" id="editPhone" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Date of Birth (DOB)</label>
+                        <input type="date" id="editDob" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Date of Joining (DOJ)</label>
+                        <input type="date" id="editDoj" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Department</label>
+                        <input type="text" id="editDepartment" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Designation</label>
+                        <input type="text" id="editDesignation" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Shift Timings</label>
+                        <input type="text" id="editShiftTiming" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Base Salary (₹)</label>
+                        <input type="number" id="editSalary" required>
+                    </div>
+                </div>
+                
+                <div class="input-group" style="margin-top: 12px;">
+                    <label>Full Address</label>
+                    <textarea id="editAddress" rows="2" required></textarea>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="saveEditBtn" style="background: #3498db; color: white;">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Bottom Navigation Bar -->
+    <div class="bottom-nav">
+        <div class="nav-item" onclick="window.location.href='admin-dashboard.html'">
+            <span class="nav-icon">🏠</span>
+            Home
+        </div>
+        <div class="nav-item active">
+            <span class="nav-icon">👥</span>
+            Employees
+        </div>
+        <div class="nav-item" onclick="window.location.href='admin-leaves.html'">
+            <span class="nav-icon">📅</span>
+            Leaves
+        </div>
+        <div class="nav-item" onclick="window.location.href='admin-holidays.html'">
+            <span class="nav-icon">🏖️</span>
+            Holidays
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        // Added deleteDoc in imports
+        import { getFirestore, doc, setDoc, getDocs, collection, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAw8NhVWaoMbm-CiED4M_K02wOSRtV2LUc",
+            authDomain: "hire-your-va-hr.firebaseapp.com",
+            projectId: "hire-your-va-hr",
+            storageBucket: "hire-your-va-hr.firebasestorage.app",
+            messagingSenderId: "75356368308",
+            appId: "1:75356368308:web:be5c4cfaa62c72efced6e1"
+        };
+
+        const mainApp = initializeApp(firebaseConfig);
+        const db = getFirestore(mainApp);
+        const mainAuth = getAuth(mainApp);
+
+        const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
+        const secondaryAuth = getAuth(secondaryApp);
+
+        // Global Cache to hold employee data for editing
+        window.employeeCache = {};
+
+        // =========================================================================
+        // CUSTOM BEAUTIFUL UI MODAL DIALOGS
+        // =========================================================================
+        function showCustomConfirm(title, message, isAlert = false, borderColor = "#2ecc71") {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('customPopupModal');
+                const titleEl = document.getElementById('customPopupTitle');
+                const msgEl = document.getElementById('customPopupMsg');
+                const okBtn = document.getElementById('customPopupOkBtn');
+                const cancelBtn = document.getElementById('customPopupCancelBtn');
+                const box = document.getElementById('customPopupBorder');
+
+                titleEl.innerText = title;
+                msgEl.innerText = message;
+                box.style.borderTopColor = borderColor;
+
+                if (isAlert) {
+                    cancelBtn.style.display = "none";
+                    okBtn.style.flex = "none";
+                    okBtn.style.width = "100%";
+                } else {
+                    cancelBtn.style.display = "block";
+                    okBtn.style.flex = "1";
+                    cancelBtn.style.flex = "1";
+                }
+
+                modal.style.display = "flex";
+
+                const cleanup = () => {
+                    modal.style.display = "none";
+                    okBtn.onclick = null;
+                    cancelBtn.onclick = null;
+                };
+
+                okBtn.onclick = () => {
+                    cleanup();
+                    resolve(true);
+                };
+
+                cancelBtn.onclick = () => {
+                    cleanup();
+                    resolve(false);
+                };
+            });
+        }
+
+        onAuthStateChanged(mainAuth, (user) => {
+            if (!user) {
+                window.location.href = "index.html";
+            } else {
+                fetchEmployeesDirectory();
+            }
+        });
+
+        async function fetchEmployeesDirectory() {
+            const directoryDiv = document.getElementById('employeesDirectory');
+            try {
+                const querySnapshot = await getDocs(collection(db, "employees"));
+                let html = '<div class="emp-list-grid">';
+                
+                let count = 0;
+                window.employeeCache = {}; // Clear cache
+                
+                // 1. Array to hold all employee objects
+                let empArray = [];
+
+                querySnapshot.forEach((docSnap) => {
+                    const emp = docSnap.data();
+                    if(emp.role === "ADMIN") return;
+                    emp.docId = docSnap.id; // Store document ID safely for later use
+                    empArray.push(emp);
+                });
+
+                // 2. Sort the array alphabetically/numerically by employeeId
+                empArray.sort((a, b) => {
+                    let idA = a.employeeId || "";
+                    let idB = b.employeeId || "";
+                    return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' });
+                });
+
+                // 3. Render the sorted array
+                empArray.forEach((emp) => {
+                    count++;
+                    
+                    window.employeeCache[emp.docId] = emp; // Store for edit modal
+                    
+                    const isActive = emp.isActive !== false;
+                    const statusClass = isActive ? "" : "blocked";
+                    const btnClass = isActive ? "btn-block" : "btn-unblock";
+                    const btnText = isActive ? "Terminate / Block" : "Unblock / Restore";
+                    const statusText = isActive ? '<span style="color:#2ecc71;">● Active</span>' : '<span style="color:#e74c3c;">● Terminated</span>';
+                    const displayName = (emp.name && emp.name !== "undefined") ? emp.name : (emp.email || "Unknown");
+
+                    html += `
+                        <div class="emp-item ${statusClass}">
+                            <h4>${displayName}</h4>
+                            <p><strong>ID:</strong> ${emp.employeeId || 'N/A'}</p>
+                            <p><strong>Dept:</strong> ${emp.department || 'N/A'}</p>
+                            <p><strong>Shift:</strong> <span style="color: #3498db; font-weight:bold;">${emp.shiftTiming || 'Not Assigned'}</span></p>
+                            <p>Status: ${statusText}</p>
+                            
+                            <div class="action-buttons">
+                                <button class="btn-edit" onclick="openEditModal('${emp.docId}')">✏️ Edit Profile</button>
+                                <button class="btn-toggle ${btnClass}" onclick="toggleEmployeeStatus('${emp.docId}', ${isActive})">${btnText}</button>
+                                <button class="btn-delete" onclick="deleteEmployeeRecord('${emp.docId}', '${displayName}')">🗑️ Delete</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                if(count === 0) {
+                    directoryDiv.innerHTML = "<p style='color: #aaa; text-align: center;'>No employees found.</p>";
+                } else {
+                    html += '</div>';
+                    directoryDiv.innerHTML = html;
+                }
+            } catch (e) {
+                directoryDiv.innerHTML = "<p style='color: #e74c3c;'>Error loading directory.</p>";
+            }
+        }
+
+        // --- Edit Modal Functions ---
+        window.openEditModal = function(uid) {
+            const emp = window.employeeCache[uid];
+            if(!emp) return;
+
+            document.getElementById('editUid').value = uid;
+            
+            // Populate Fields including DOB
+            document.getElementById('editEmpId').value = emp.employeeId || '';
+            document.getElementById('editEmail').value = emp.email || '';
+            document.getElementById('editDob').value = emp.dob || '';
+            document.getElementById('editDoj').value = emp.doj || '';
+            document.getElementById('editName').value = (emp.name && emp.name !== "undefined") ? emp.name : '';
+            document.getElementById('editPhone').value = emp.phone || '';
+            document.getElementById('editDepartment').value = emp.department || '';
+            document.getElementById('editDesignation').value = emp.designation || '';
+            document.getElementById('editSalary').value = emp.baseSalary || '';
+            document.getElementById('editAddress').value = emp.address || '';
+            document.getElementById('editShiftTiming').value = emp.shiftTiming || '';
+            
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        window.closeEditModal = function() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        document.getElementById('editEmployeeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const uid = document.getElementById('editUid').value;
+            const btn = document.getElementById('saveEditBtn');
+            
+            btn.disabled = true;
+            btn.innerText = "Saving Updates...";
+
+            try {
+                await updateDoc(doc(db, "employees", uid), {
+                    employeeId: document.getElementById('editEmpId').value,
+                    email: document.getElementById('editEmail').value,
+                    dob: document.getElementById('editDob').value,
+                    doj: document.getElementById('editDoj').value,
+                    name: document.getElementById('editName').value,
+                    phone: document.getElementById('editPhone').value,
+                    department: document.getElementById('editDepartment').value,
+                    designation: document.getElementById('editDesignation').value,
+                    shiftTiming: document.getElementById('editShiftTiming').value,
+                    baseSalary: Number(document.getElementById('editSalary').value),
+                    address: document.getElementById('editAddress').value
+                });
+                
+                await showCustomConfirm("Profile Updated", "Employee Profile Updated Successfully!", true, "#2ecc71");
+                closeEditModal();
+                fetchEmployeesDirectory(); // Refresh the list
+            } catch(error) {
+                await showCustomConfirm("Error", "Error updating profile: " + error.message, true, "#e74c3c");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Save Changes";
+            }
+        });
+
+        // --- Terminate/Restore Function ---
+        window.toggleEmployeeStatus = async function(uid, currentStatus) {
+            const actionName = currentStatus ? "terminate/block" : "restore/unblock";
+            const isConfirmed = await showCustomConfirm("Confirm Action", `Are you sure you want to ${actionName} this employee?`, false, "#e74c3c");
+            if(!isConfirmed) return;
+
+            try {
+                await updateDoc(doc(db, "employees", uid), {
+                    isActive: !currentStatus
+                });
+                await showCustomConfirm("Success", `Employee successfully ${currentStatus ? 'blocked' : 'restored'}!`, true, "#2ecc71");
+                fetchEmployeesDirectory();
+            } catch(e) {
+                await showCustomConfirm("Error", "Error: " + e.message, true, "#e74c3c");
+            }
+        }
+
+        // --- Delete Employee Function (NEW) ---
+        window.deleteEmployeeRecord = async function(uid, empName) {
+            const isConfirmed = await showCustomConfirm(
+                "Delete Employee", 
+                `Are you sure you want to permanently delete ${empName}? This action cannot be undone.`, 
+                false, 
+                "#e74c3c"
+            );
+            
+            if(!isConfirmed) return;
+
+            try {
+                // Delete from Firestore
+                await deleteDoc(doc(db, "employees", uid));
+                await showCustomConfirm("Deleted", `${empName} has been permanently deleted from the system.`, true, "#2ecc71");
+                fetchEmployeesDirectory(); // Refresh the list
+            } catch(e) {
+                await showCustomConfirm("Error", "Error deleting employee: " + e.message, true, "#e74c3c");
+            }
+        }
+
+        // --- Add New Employee Function ---
+        document.getElementById('addEmployeeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const statusMsg = document.getElementById('statusMsg');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            submitBtn.disabled = true;
+            statusMsg.innerText = "Creating Employee Account & Saving Profile...";
+            statusMsg.style.color = "#f39c12";
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+                const newUserId = userCredential.user.uid;
+
+                const employeeData = {
+                    role: "EMPLOYEE",
+                    isActive: true,
+                    employeeId: document.getElementById('empId').value,
+                    name: document.getElementById('name').value,
+                    email: email,
+                    phone: document.getElementById('phone').value,
+                    department: document.getElementById('department').value,
+                    designation: document.getElementById('designation').value,
+                    shiftTiming: document.getElementById('shiftTiming').value,
+                    baseSalary: Number(document.getElementById('salary').value),
+                    dob: document.getElementById('dob').value,
+                    doj: document.getElementById('doj').value,
+                    address: document.getElementById('address').value,
+                    createdAt: Date.now()
+                };
+
+                await setDoc(doc(db, "employees", newUserId), employeeData);
+                await signOut(secondaryAuth);
+
+                statusMsg.innerText = "Employee Added Successfully!";
+                statusMsg.style.color = "#2ecc71";
+                document.getElementById('addEmployeeForm').reset();
+                fetchEmployeesDirectory();
+            } catch (error) {
+                statusMsg.innerText = "Error: " + error.message;
+                statusMsg.style.color = "#e74c3c";
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

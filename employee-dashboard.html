@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIRE YOUR VA - Employee Dashboard</title>
+    <!-- Native Capacitor Plugins Bridge (Generated via GitHub Actions) -->
+    <script src="plugins.js"></script>
+    <!-- PWA & iPhone (iOS) Support Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2ecc71">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HireYourVA">
+    <link rel="apple-touch-icon" href="logo.png">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: #f5f5dc;
+            margin: 0;
+            padding: 0;
+            font-size: 15px;
+            padding-bottom: 70px; /* Space for bottom nav */
+        }
+
+        .header {
+            background-color: #242424;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .header img {
+            max-height: 45px;
+            border-radius: 4px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        #welcomeMsg {
+            font-size: 14px;
+            font-weight: 500;
+            color: #f5f5dc;
+            display: none;
+        }
+
+        @media(min-width: 500px) {
+            #welcomeMsg {
+                display: inline;
+            }
+        }
+        
+        .logout-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .notif-container {
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            background: #333;
+            border-radius: 50%;
+            border: 1px solid #444;
+        }
+
+        .notif-bell {
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .notif-badge {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            background: #e74c3c;
+            color: white;
+            font-size: 10px;
+            padding: 2px 5px;
+            border-radius: 50%;
+            font-weight: bold;
+            display: none;
+        }
+
+        .container {
+            padding: 25px 20px;
+            max-width: 450px;
+            margin: 30px auto;
+            text-align: center;
+            background: #242424;
+            border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            border-top: 4px solid #2ecc71;
+        }
+
+        h2 {
+            font-size: 22px;
+            margin-top: 0;
+        }
+
+        .time-display {
+            font-size: 45px;
+            font-weight: bold;
+            color: #2ecc71;
+            margin: 15px 0;
+            letter-spacing: 1px;
+        }
+        
+        .late-warning {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: none;
+            border: 1px solid #e74c3c;
+        }
+        
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button.action-btn {
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-in { background-color: #2ecc71; color: #111; }
+        .btn-break { background-color: #f39c12; color: #111; }
+        .btn-out { background-color: #e74c3c; color: white; }
+        .btn-history { background-color: #8e44ad; color: white; margin-top: 10px; }
+        .btn-history:hover { background-color: #9b59b6; }
+        
+        .btn-alarm { background-color: #3498db; color: white; margin-top: 5px; }
+        .btn-update { background-color: #3498db; color: white; margin-top: 20px; }
+
+        button:disabled { background-color: #444; color: #888; cursor: not-allowed; }
+        
+        .stats {
+            margin-top: 25px;
+            text-align: left;
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2ecc71;
+        }
+
+        .stats p {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        #resetBtn {
+            background: none;
+            color: #3498db;
+            border: none;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-top: 15px;
+            display: none;
+            font-size: 13px;
+        }
+
+        #locationStatus {
+            color: #f39c12;
+            font-size: 12px;
+            margin-top: 6px;
+            font-weight: bold;
+            height: 16px;
+        }
+
+        /* Bottom Navigation Bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #242424;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid #333;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            color: #aaa;
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .nav-item:hover {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .nav-item.active {
+            color: #2ecc71;
+            border-top: 3px solid #2ecc71;
+            margin-top: -3px;
+            font-weight: bold;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* Modals (Broadcast, Profile, History, Alarms) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.94);
+            z-index: 9999999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: #242424;
+            padding: 20px;
+            border-radius: 10px;
+            border-top: 4px solid #3498db;
+            width: 100%;
+            max-width: 450px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #3498db;
+            font-size: 20px;
+        }
+
+        .close-btn {
+            background: transparent;
+            color: #aaa;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
+        /* Profile Grid & Form */
+        .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .profile-detail { margin-bottom: 8px; font-size: 14px; }
+        .profile-detail span { color: #aaa; display: block; font-size: 12px; margin-bottom: 2px; }
+        .profile-detail strong { color: #fff; font-size: 14px; word-break: break-word; }
+        
+        .edit-input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #444; background: #333; color: white; box-sizing: border-box; font-family: inherit; }
+        .edit-input:disabled { background: #1a1a1a; color: #888; cursor: not-allowed; border-color: #222; }
+
+        /* History Card */
+        .history-card { background: #1a1a1a; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #8e44ad; }
+        .history-card h4 { margin: 0 0 5px 0; color: #8e44ad; font-size: 16px; }
+        .history-card p { margin: 3px 0; font-size: 13px; color: #ccc; }
+        
+        .month-picker { width: 100%; padding: 10px; background: #333; color: white; border: 1px solid #444; border-radius: 6px; margin-bottom: 15px; box-sizing: border-box; font-family: inherit; }
+        
+        /* Alarm Input */
+        .alarm-input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #444; background: #333; color: white; box-sizing: border-box; font-family: inherit; }
+
+        /* Custom Popup Box */
+        .custom-popup-box {
+            background: #242424;
+            padding: 25px 20px;
+            border-radius: 12px;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+            border-top: 5px solid #2ecc71;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            box-sizing: border-box;
+        }
+
+        .custom-popup-box h3 {
+            margin-top: 0;
+            color: #f5f5dc;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .custom-popup-box p {
+            color: #ccc;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .custom-popup-btns {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-confirm-ok {
+            flex: 1;
+            background: #2ecc71;
+            color: #111;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-confirm-cancel {
+            flex: 1;
+            background: #444;
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+        }
+    </style>
+    <!-- HYVA professional theme layer (additive; remove these 2 lines to roll back) -->
+    <link rel="stylesheet" href="hyva-theme.css">
+    <script src="hyva-motion.js"></script>
+</head>
+<body>
+
+    <div class="header">
+        <img src="logo.png" alt="Hire Your VA" onerror="this.style.display='none'">
+        <div class="header-right">
+            <!-- Notification Bell -->
+            <div class="notif-container" id="notifContainer" onclick="window.location.href='employee-notifications.html'">
+                <div class="notif-bell">🔔</div>
+                <span class="notif-badge" id="notifBadge">0</span>
+            </div>
+            <span id="welcomeMsg">Employee</span>
+            <button class="logout-btn" id="logoutBtn">Logout</button>
+        </div>
+    </div>
+
+    <!-- ================= STRICT PERMISSIONS BLOCKER ================= -->
+    <div id="permissionBlocker" class="modal-overlay" style="display: flex; background: rgba(0,0,0,0.98); z-index: 999999999; flex-direction: column; text-align: center; justify-content: center;">
+        <div style="background: #242424; padding: 30px 20px; border-radius: 12px; max-width: 400px; width: 90%; border-top: 5px solid #e74c3c; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+            <div style="font-size: 50px; margin-bottom: 10px;">⚠️</div>
+            <h2 style="color: #e74c3c; margin-top: 0;">Permissions Required</h2>
+            <p style="color: #ccc; font-size: 14px; line-height: 1.5;">To use the Hire Your VA portal, you must grant access to your <b>Location (GPS)</b> and <b>Notifications</b>. We need this to verify your attendance location and send shift reminders.</p>
+            
+            <div style="text-align: left; margin: 25px 0; background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #444;">
+                <p style="margin: 5px 0; font-size: 14px;">📍 Location: <strong id="locPermText" style="color: #e74c3c; float: right;">❌ Pending</strong></p>
+                <hr style="border: 0; border-top: 1px solid #333; margin: 10px 0;">
+                <p style="margin: 5px 0; font-size: 14px;">🔔 Notifications: <strong id="notifPermText" style="color: #e74c3c; float: right;">❌ Pending</strong></p>
+            </div>
+            
+            <button id="grantPermBtn" class="action-btn btn-in" style="width: 100%;">Grant Permissions</button>
+        </div>
+    </div>
+
+    <!-- ================= APP VERSION UPDATE BLOCKER ================= -->
+    <div id="updateBlocker" class="modal-overlay" style="display: none; background: rgba(0,0,0,0.98); z-index: 9999999999; flex-direction: column; text-align: center; justify-content: center; align-items: center;">
+        <div style="background: #242424; padding: 30px 20px; border-radius: 12px; max-width: 400px; width: 90%; border-top: 5px solid #3498db; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+            <div style="font-size: 50px; margin-bottom: 10px;">🚀</div>
+            <h2 style="color: #3498db; margin-top: 0;">Update Available</h2>
+            <p style="color: #ccc; font-size: 14px; line-height: 1.5;">A new version of <b>Hire Your VA</b> is available with important features and security fixes.</p>
+            <button id="btnUpdateApp" class="action-btn btn-update" style="width: 100%;">🔄 Update Now</button>
+        </div>
+    </div>
+
+    <!-- Admin Broadcast Modal -->
+    <div class="modal-overlay" id="broadcastOverlay" style="align-items: center; justify-content: center; text-align: center;">
+        <div class="modal-content" style="border-top: 4px solid #e74c3c;">
+            <div style="font-size: 45px; margin-bottom: 10px;">📢</div>
+            <h3 id="broadcastTitle" style="color: #e74c3c; margin: 0 0 12px 0;">URGENT ANNOUNCEMENT</h3>
+            <p id="broadcastMsg" style="color: #f5f5dc; background: #1a1a1a; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c; text-align: left;"></p>
+            <button id="btnAckBroadcast" class="action-btn btn-in" style="width: 100%;">I Understand & Acknowledge</button>
+        </div>
+    </div>
+
+    <!-- Employee Profile Modal -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>👤 My Profile</h3>
+                <button class="close-btn" id="closeProfileBtn">&times;</button>
+            </div>
+            <div id="profileContent">
+                <!-- Loaded via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance History Modal -->
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="color: #8e44ad;">📊 Monthly History</h3>
+                <button class="close-btn" id="closeHistoryBtn">&times;</button>
+            </div>
+            <input type="month" id="historyMonthPicker" class="month-picker">
+            <div id="historyList" style="flex: 1; overflow-y: auto;">
+                <p style="color: #aaa; text-align: center;">Select a month to view history.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alarm Settings Modal -->
+    <div class="modal-overlay" id="alarmModal">
+        <div class="modal-content" style="border-top-color: #3498db;">
+            <div class="modal-header">
+                <h3 style="color: #3498db; margin: 0;">⏰ Reminder Alarms</h3>
+                <button class="close-btn" id="closeAlarmBtn">&times;</button>
+            </div>
+            <p style="font-size: 13px; color: #aaa; margin-top: 0; margin-bottom: 15px;">Set daily reminders for your shifts. Your phone will notify you automatically.</p>
+            <div style="background: rgba(243, 156, 18, 0.1); border-left: 3px solid #f39c12; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+                <p style="font-size: 12px; color: #f39c12; margin: 0; line-height: 1.4;"><b>⚠️ Under Construction:</b> Alarm feature is currently partially working. Background alerts may be delayed if the phone is in deep idle/sleep mode.</p>
+            </div>
+
+            <label style="font-size: 13px; color: #ccc;">Clock In Reminder:</label>
+            <input type="time" id="alarmIn" class="alarm-input">
+
+            <label style="font-size: 13px; color: #ccc;">Take Break Reminder:</label>
+            <input type="time" id="alarmBreak" class="alarm-input">
+
+            <label style="font-size: 13px; color: #ccc;">Clock Out Reminder:</label>
+            <input type="time" id="alarmOut" class="alarm-input">
+
+            <button id="saveAlarmsBtn" class="action-btn btn-alarm" style="width: 100%;">💾 Save Alarms</button>
+        </div>
+    </div>
+
+    <!-- CUSTOM POPUP DIALOG -->
+    <div id="customPopupModal" class="modal-overlay" style="z-index: 1000000000;">
+        <div class="custom-popup-box" id="customPopupBorder">
+            <h3 id="customPopupTitle">Confirmation</h3>
+            <p id="customPopupMsg">Are you sure?</p>
+            <div class="custom-popup-btns">
+                <button id="customPopupCancelBtn" class="btn-confirm-cancel">Cancel</button>
+                <button id="customPopupOkBtn" class="btn-confirm-ok">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Daily Attendance</h2>
+        <div class="late-warning" id="lateWarning">⚠️ HALF DAY MARKED (Punched in Late)</div>
+        <div class="time-display" id="netTimeDisplay">00:00:00</div>
+        <p style="color: #aaa; font-size: 12px; margin-top: -10px;">NET WORKING TIME</p>
+        
+        <div id="locationStatus"></div>
+
+        <div class="btn-group">
+            <button id="clockInBtn" class="action-btn btn-in">Clock In</button>
+            <button id="breakBtn" class="action-btn btn-break" disabled>Take Break (ON)</button>
+            <button id="clockOutBtn" class="action-btn btn-out" disabled>Clock Out</button>
+            <button id="openAlarmBtn" class="action-btn btn-alarm">⏰ Set Shift Reminders</button>
+            <button id="viewHistoryBtn" class="action-btn btn-history">📊 View Monthly History</button>
+        </div>
+
+        <div class="stats">
+            <p><strong>Status:</strong> <span id="currentStatus" style="color: #aaa;">Not Started</span></p>
+            <p><strong>Clock In:</strong> <span id="clockInTime">--:--</span></p>
+            <p><strong>Clock Out:</strong> <span id="clockOutTime">--:--</span></p>
+            <hr style="border: 0; border-top: 1px solid #333; margin: 10px 0;">
+            <p><strong>Total Break Time:</strong> <span id="totalBreakTime">00:00:00</span></p>
+            <p><strong>Total Worked Time:</strong> <span id="totalWorkedTime">00:00:00</span></p>
+        </div>
+        
+        <button id="resetBtn">Testing Only: Reset Today's Shift</button>
+    </div>
+
+    <!-- Bottom Navigation Bar Tabs -->
+    <div class="bottom-nav">
+        <div class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            Home
+        </div>
+        <div class="nav-item" id="navProfileBtn">
+            <span class="nav-icon">👤</span>
+            Profile
+        </div>
+        <div class="nav-item" onclick="window.location.href='employee-leaves.html'">
+            <span class="nav-icon">📅</span>
+            Leaves
+        </div>
+        <div class="nav-item" onclick="window.location.href='employee-holidays.html'">
+            <span class="nav-icon">🏖️</span>
+            Holidays
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAw8NhVWaoMbm-CiED4M_K02wOSRtV2LUc",
+            authDomain: "hire-your-va-hr.firebaseapp.com",
+            projectId: "hire-your-va-hr",
+            storageBucket: "hire-your-va-hr.firebasestorage.app",
+            messagingSenderId: "75356368308",
+            appId: "1:75356368308:web:be5c4cfaa62c72efced6e1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        setPersistence(auth, browserLocalPersistence).catch(console.error);
+
+        // VAPID KEY FOR WEB PUSH (PWA)
+        const vapidKey = "BEXZlEvQStFOLkqqisrhLlCNKJ4XzTGNl84k2caFe2lZ1w4I-rWYMEPHzTsn_LCqLTe-Mv5H04mKFSze0XV2GNM";
+
+        // =========================================================================
+        // CUSTOM BEAUTIFUL UI MODAL DIALOGS
+        // =========================================================================
+        function showCustomConfirm(title, message, isAlert = false, borderColor = "#2ecc71") {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('customPopupModal');
+                const titleEl = document.getElementById('customPopupTitle');
+                const msgEl = document.getElementById('customPopupMsg');
+                const okBtn = document.getElementById('customPopupOkBtn');
+                const cancelBtn = document.getElementById('customPopupCancelBtn');
+                const box = document.getElementById('customPopupBorder');
+
+                titleEl.innerText = title;
+                msgEl.innerText = message;
+                box.style.borderTopColor = borderColor;
+
+                if (isAlert) {
+                    cancelBtn.style.display = "none";
+                    okBtn.style.flex = "none";
+                    okBtn.style.width = "100%";
+                } else {
+                    cancelBtn.style.display = "block";
+                    okBtn.style.flex = "1";
+                    cancelBtn.style.flex = "1";
+                }
+
+                modal.style.display = "flex";
+
+                const cleanup = () => {
+                    modal.style.display = "none";
+                    okBtn.onclick = null;
+                    cancelBtn.onclick = null;
+                };
+
+                okBtn.onclick = () => {
+                    cleanup();
+                    resolve(true);
+                };
+
+                cancelBtn.onclick = () => {
+                    cleanup();
+                    resolve(false);
+                };
+            });
+        }
+
+        // =========================================================================
+        // NATIVE ANDROID NOTIFICATION CHANNEL CREATION
+        // =========================================================================
+        async function setupNotificationChannel() {
+            if (window.LocalNotifications) {
+                try {
+                    await window.LocalNotifications.createChannel({
+                        id: 'shift_alarms_v3',
+                        name: 'Shift Reminders',
+                        description: 'Reminders for clock-in, breaks, and clock-out',
+                        importance: 5,
+                        visibility: 1,
+                        sound: 'notification.mp3',
+                        vibration: true
+                    });
+                } catch(e) {}
+            }
+        }
+        setupNotificationChannel();
+
+        // =========================================================================
+        // HYBRID PUSH NOTIFICATION ENGINE
+        // =========================================================================
+        async function initPushNotifications() {
+            // Check for Native APK First
+            if (window.PushNotifications) {
+                try {
+                    await window.PushNotifications.requestPermissions();
+                    await window.PushNotifications.register();
+
+                    window.PushNotifications.addListener('registration', async (token) => {
+                        if (currentUser) {
+                            await updateDoc(doc(db, "employees", currentUser.uid), {
+                                fcmToken: token.value
+                            });
+                        }
+                    });
+
+                    window.PushNotifications.addListener('pushNotificationReceived', (notification) => {
+                        showCustomConfirm(notification.title || "Alert", notification.body || "New notification", true, "#e74c3c");
+                        playNotificationSound();
+                    });
+                    return; // Exit if Native succeeds
+                } catch(e) {}
+            }
+
+            // Fallback: PWA WEB PUSH
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    const messaging = getMessaging(app);
+                    const currentToken = await getToken(messaging, { vapidKey: vapidKey });
+                    if (currentToken && currentUser) {
+                        await updateDoc(doc(db, "employees", currentUser.uid), {
+                            fcmToken: currentToken
+                        });
+                    }
+                    onMessage(messaging, (payload) => {
+                        showCustomConfirm(payload.notification.title || "Alert", payload.notification.body || "New notification", true, "#e74c3c");
+                        playNotificationSound();
+                    });
+                }
+            } catch (err) {}
+        }
+
+        // =========================================================================
+        // APP VERSION CONTROL
+        // =========================================================================
+        const APP_VERSION = "1.0.0";
+        
+        function listenForAppUpdates() {
+            const configRef = doc(db, "settings", "app_config");
+            onSnapshot(configRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.current_version && data.current_version !== APP_VERSION) {
+                        document.getElementById('updateBlocker').style.display = 'flex';
+                    } else {
+                        document.getElementById('updateBlocker').style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        document.getElementById('btnUpdateApp').addEventListener('click', () => {
+            document.getElementById('btnUpdateApp').innerText = "Updating Cache...";
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for(let registration of registrations) {
+                        registration.unregister();
+                    }
+                    window.location.href = window.location.href.split('?')[0] + '?v=' + new Date().getTime();
+                });
+            } else {
+                window.location.href = window.location.href.split('?')[0] + '?v=' + new Date().getTime();
+            }
+        });
+
+        // =========================================================================
+        // STRICT MANDATORY PERMISSIONS BLOCKER (FULLY UNBLOCKED CLICK LISTENER)
+        // =========================================================================
+        async function enforcePermissions() {
+            let locGranted = false;
+            let notifGranted = false;
+
+            const isNativeApp = !!window.LocalNotifications || !!window.PushNotifications;
+            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+            // 1. Check Notifications (Independent Fallback)
+            try {
+                if (window.LocalNotifications) {
+                    const notifPerm = await window.LocalNotifications.checkPermissions();
+                    if (notifPerm.display === 'granted') notifGranted = true;
+                }
+            } catch(e) {}
+            
+            if (!notifGranted && window.Notification && Notification.permission === "granted") {
+                notifGranted = true; 
+            }
+
+            // 2. Check Location (Independent Fallback)
+            try {
+                if (window.Geolocation) {
+                    const locPerm = await window.Geolocation.checkPermissions();
+                    if (locPerm.location === 'granted' || locPerm.coarseLocation === 'granted') locGranted = true;
+                }
+            } catch(e) {}
+
+            if (!locGranted && navigator.permissions) {
+                try {
+                    const permStatus = await navigator.permissions.query({ name: 'geolocation' });
+                    if (permStatus.state === 'granted') locGranted = true;
+                } catch(e) {}
+            }
+            
+            // Bulletproof Override for PWA
+            if (window.hasWebLocation) {
+                locGranted = true;
+            }
+
+            if (!isNativeApp && !isMobileDevice) {
+                locGranted = true; 
+                document.getElementById('locPermText').innerHTML = "💻 Desktop (Bypassed)";
+                document.getElementById('locPermText').style.color = "#3498db";
+            } else {
+                document.getElementById('locPermText').innerHTML = locGranted ? "✅ Allowed" : "❌ Denied";
+                document.getElementById('locPermText').style.color = locGranted ? "#2ecc71" : "#e74c3c";
+            }
+
+            document.getElementById('notifPermText').innerHTML = notifGranted ? "✅ Allowed" : "❌ Denied";
+            document.getElementById('notifPermText').style.color = notifGranted ? "#2ecc71" : "#e74c3c";
+
+            const blocker = document.getElementById('permissionBlocker');
+            if (locGranted && notifGranted) {
+                blocker.style.display = 'none';
+                if(currentUser) initPushNotifications();
+            } else {
+                blocker.style.display = 'flex';
+            }
+        }
+
+        window.addEventListener('load', enforcePermissions);
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === 'visible') {
+                enforcePermissions();
+            }
+        });
+
+        document.getElementById('grantPermBtn').addEventListener('click', async () => {
+            const isNativeApp = !!window.LocalNotifications || !!window.PushNotifications;
+            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const requiresGPS = isNativeApp || isMobileDevice;
+
+            try {
+                if (window.LocalNotifications) {
+                    window.LocalNotifications.requestPermissions().then(() => enforcePermissions());
+                } 
+                if (window.Notification && Notification.permission !== "granted" && Notification.permission !== "denied") {
+                    Notification.requestPermission().then(() => enforcePermissions());
+                }
+                if (window.PushNotifications) {
+                    window.PushNotifications.requestPermissions().catch(e=>{});
+                }
+            } catch(e) {}
+
+            try {
+                if (isNativeApp && window.Geolocation) {
+                    window.Geolocation.requestPermissions().then(() => enforcePermissions()).catch(e=>{});
+                } 
+                
+                if (requiresGPS && navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => { 
+                            window.hasWebLocation = true; // Bulletproof flag
+                            enforcePermissions(); 
+                        },
+                        (error) => {
+                            showCustomConfirm("GPS Blocked", "Your device or browser is blocking Location. Please allow Location access.", true, "#e74c3c")
+                            .then(() => enforcePermissions());
+                        },
+                        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                    );
+                } else {
+                    enforcePermissions(); // For Desktop
+                }
+            } catch(e) {}
+        });
+
+        // =========================================================================
+        // ULTIMATE ANTI-FRAUD SECURE TIME LOGIC
+        // =========================================================================
+        let baseServerTime = Date.now(); 
+        let basePerfTime = performance.now();
+
+        async function syncSecureTime() {
+            try {
+                const url = window.location.href.split('?')[0] + "?nocache=" + new Date().getTime();
+                const res = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+                const serverDateStr = res.headers.get('Date');
+                if (serverDateStr) {
+                    baseServerTime = new Date(serverDateStr).getTime();
+                    basePerfTime = performance.now();
+                }
+            } catch (error) {}
+        }
+
+        syncSecureTime();
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === 'visible') {
+                syncSecureTime();
+            }
+        });
+
+        function getRealTime() {
+            return baseServerTime + (performance.now() - basePerfTime);
+        }
+        // =========================================================================
+
+        let currentUser = null;
+        let employeeName = "Employee";
+        let attendanceDocId = "";
+        let attData = {
+            clockIn: null,
+            clockOut: null,
+            breaks: [],
+            status: "OUT",
+            halfDayMarked: false,
+            adminRevokedLate: false
+        };
+        let timerInterval = null;
+
+        const ui = {
+            welcome: document.getElementById('welcomeMsg'),
+            netTime: document.getElementById('netTimeDisplay'),
+            clockInBtn: document.getElementById('clockInBtn'),
+            breakBtn: document.getElementById('breakBtn'),
+            clockOutBtn: document.getElementById('clockOutBtn'),
+            viewHistoryBtn: document.getElementById('viewHistoryBtn'),
+            status: document.getElementById('currentStatus'),
+            inTime: document.getElementById('clockInTime'),
+            outTime: document.getElementById('clockOutTime'),
+            breakTime: document.getElementById('totalBreakTime'),
+            workedTime: document.getElementById('totalWorkedTime'),
+            resetBtn: document.getElementById('resetBtn'),
+            lateWarning: document.getElementById('lateWarning'),
+            locStatus: document.getElementById('locationStatus'),
+            
+            broadcastOverlay: document.getElementById('broadcastOverlay'),
+            broadcastTitle: document.getElementById('broadcastTitle'),
+            broadcastMsg: document.getElementById('broadcastMsg'),
+            btnAckBroadcast: document.getElementById('btnAckBroadcast'),
+            
+            navProfileBtn: document.getElementById('navProfileBtn'),
+            profileModal: document.getElementById('profileModal'),
+            closeProfileBtn: document.getElementById('closeProfileBtn'),
+            profileContent: document.getElementById('profileContent'),
+
+            historyModal: document.getElementById('historyModal'),
+            closeHistoryBtn: document.getElementById('closeHistoryBtn'),
+            historyMonthPicker: document.getElementById('historyMonthPicker'),
+            historyList: document.getElementById('historyList')
+        };
+
+        // ================= PROFILE & EDIT LOGIC (UPDATED WITH DOB & EMAIL & APP UPDATE BUTTON) =================
+        function renderProfileView() {
+            const d = window.currentUserData;
+            if (!d) return;
+            ui.profileContent.innerHTML = `
+                <div class="profile-grid">
+                    <div class="profile-detail"><span>Full Name</span><strong>${d.name || 'N/A'}</strong></div>
+                    <div class="profile-detail"><span>Phone Number</span><strong>${d.phone || 'N/A'}</strong></div>
+                    <div class="profile-detail"><span>Email Address</span><strong>${d.email || 'N/A'}</strong></div>
+                    <div class="profile-detail"><span>Date of Birth</span><strong>${d.dob || 'N/A'}</strong></div>
+                    <div class="profile-detail"><span>Employee ID</span><strong>${d.employeeId || 'N/A'}</strong></div>
+                    <div class="profile-detail"><span>Department</span><strong>${d.department || 'N/A'}</strong></div>
+                    <div class="profile-detail"><span>Designation</span><strong>${d.designation || 'N/A'}</strong></div>
+                    <div class="profile-detail"><span>Base Salary</span><strong>₹${(d.baseSalary || 0).toLocaleString()}</strong></div>
+                    <div class="profile-detail"><span>Date of Joining</span><strong>${d.doj || 'N/A'}</strong></div>
+                </div>
+                <div class="profile-detail" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #444;">
+                    <span>Shift Timing (Read Only)</span><strong style="color: #3498db;">${d.shiftTiming || 'Not Assigned'}</strong>
+                </div>
+                <div class="profile-detail" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #444;">
+                    <span>Full Address</span><strong>${d.address || 'N/A'}</strong>
+                </div>
+                <button id="startEditProfileBtn" class="action-btn btn-history" style="width: 100%; margin-top: 15px;">✏️ Edit My Profile</button>
+                <button id="manualUpdateBtn" class="action-btn btn-update" style="width: 100%; margin-top: 10px; background-color: #f39c12; border-top: 2px solid #e67e22;">🔄 Check for App Updates</button>
+            `;
+            
+            document.getElementById('startEditProfileBtn').addEventListener('click', renderProfileEditForm);
+            
+            // Manual App Update Listener
+            document.getElementById('manualUpdateBtn').addEventListener('click', () => {
+                showCustomConfirm("Check for Updates", "Checking for the latest app version and clearing cache...", true, "#f39c12").then(() => {
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                            for(let registration of registrations) {
+                                registration.unregister();
+                            }
+                            window.location.href = window.location.href.split('?')[0] + '?v=' + new Date().getTime();
+                        });
+                    } else {
+                        window.location.href = window.location.href.split('?')[0] + '?v=' + new Date().getTime();
+                    }
+                });
+            });
+        }
+
+        function renderProfileEditForm() {
+            const d = window.currentUserData;
+            ui.profileContent.innerHTML = `
+                <form id="employeeEditForm">
+                    <div class="profile-detail">
+                        <span>Full Name</span>
+                        <input type="text" id="empEditName" class="edit-input" value="${d.name || ''}" required>
+                    </div>
+                    <div class="profile-detail">
+                        <span>Phone Number</span>
+                        <input type="text" id="empEditPhone" class="edit-input" value="${d.phone || ''}" required>
+                    </div>
+                    <div class="profile-detail">
+                        <span>Email Address (Profile Only)</span>
+                        <input type="email" id="empEditEmail" class="edit-input" value="${d.email || ''}" required>
+                    </div>
+                    <div class="profile-detail">
+                        <span>Date of Birth (DOB)</span>
+                        <input type="date" id="empEditDob" class="edit-input" value="${d.dob || ''}" required>
+                    </div>
+                    <div class="profile-detail" style="margin-top: 10px;">
+                        <span>Full Address</span>
+                        <textarea id="empEditAddress" class="edit-input" rows="2" required>${d.address || ''}</textarea>
+                    </div>
+                    <div class="profile-detail" style="margin-top: 10px;">
+                        <span>Assigned Shift Timing (Read Only)</span>
+                        <input type="text" class="edit-input" style="border-color: #3498db; color: #3498db;" value="${d.shiftTiming || 'Not Assigned'}" disabled>
+                    </div>
+                    <div class="profile-grid" style="margin-top: 15px;">
+                        <div class="profile-detail"><span>Employee ID (Read Only)</span><input type="text" class="edit-input" value="${d.employeeId || ''}" disabled></div>
+                        <div class="profile-detail"><span>Department (Read Only)</span><input type="text" class="edit-input" value="${d.department || ''}" disabled></div>
+                        <div class="profile-detail"><span>Designation (Read Only)</span><input type="text" class="edit-input" value="${d.designation || ''}" disabled></div>
+                        <div class="profile-detail"><span>Salary (Read Only)</span><input type="text" class="edit-input" value="₹${(d.baseSalary || 0).toLocaleString()}" disabled></div>
+                    </div>
+                    <button type="submit" id="saveEditProfileBtn" class="action-btn btn-in" style="width: 100%; margin-top: 15px;">💾 Save Changes</button>
+                    <button type="button" id="cancelEditBtn" style="background: none; color: #aaa; border: none; width: 100%; margin-top: 10px; cursor: pointer; text-decoration: underline;">Cancel</button>
+                </form>
+            `;
+
+            document.getElementById('cancelEditBtn').addEventListener('click', renderProfileView);
+            
+            document.getElementById('employeeEditForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('saveEditProfileBtn');
+                btn.disabled = true;
+                btn.innerText = "Saving...";
+
+                const newName = document.getElementById('empEditName').value;
+                const newPhone = document.getElementById('empEditPhone').value;
+                const newEmail = document.getElementById('empEditEmail').value;
+                const newDob = document.getElementById('empEditDob').value;
+                const newAddress = document.getElementById('empEditAddress').value;
+
+                try {
+                    await updateDoc(doc(db, "employees", currentUser.uid), {
+                        name: newName,
+                        phone: newPhone,
+                        email: newEmail,
+                        dob: newDob,
+                        address: newAddress
+                    });
+                    
+                    window.currentUserData.name = newName;
+                    window.currentUserData.phone = newPhone;
+                    window.currentUserData.email = newEmail;
+                    window.currentUserData.dob = newDob;
+                    window.currentUserData.address = newAddress;
+                    
+                    await showCustomConfirm("Profile Updated", "Your profile details have been saved successfully.", true, "#2ecc71");
+                    renderProfileView();
+                } catch(error) {
+                    await showCustomConfirm("Update Error", error.message, true, "#e74c3c");
+                    btn.disabled = false;
+                    btn.innerText = "💾 Save Changes";
+                }
+            });
+        }
+
+        ui.navProfileBtn.addEventListener('click', () => {
+            renderProfileView();
+            ui.profileModal.style.display = 'flex';
+        });
+
+        ui.closeProfileBtn.addEventListener('click', () => {
+            ui.profileModal.style.display = 'none';
+        });
+
+        // ================= ALARMS LOGIC (NATIVE CAPACITOR SCHEDULING) =================
+        const openAlarmBtn = document.getElementById('openAlarmBtn');
+        const alarmModal = document.getElementById('alarmModal');
+        const closeAlarmBtn = document.getElementById('closeAlarmBtn');
+        const saveAlarmsBtn = document.getElementById('saveAlarmsBtn');
+        
+        let alarms = JSON.parse(localStorage.getItem('employee_alarms')) || { in: "", break: "", out: "" };
+        
+        document.getElementById('alarmIn').value = alarms.in;
+        document.getElementById('alarmBreak').value = alarms.break;
+        document.getElementById('alarmOut').value = alarms.out;
+
+        openAlarmBtn.addEventListener('click', () => {
+            alarmModal.style.display = 'flex';
+        });
+        
+        closeAlarmBtn.addEventListener('click', () => {
+            alarmModal.style.display = 'none';
+        });
+
+        saveAlarmsBtn.addEventListener('click', async () => {
+            alarms = {
+                in: document.getElementById('alarmIn').value,
+                break: document.getElementById('alarmBreak').value,
+                out: document.getElementById('alarmOut').value
+            };
+            localStorage.setItem('employee_alarms', JSON.stringify(alarms));
+            
+            // Native Scheduler directly registers to OS alarm manager
+            if (window.LocalNotifications) {
+                try {
+                    await window.LocalNotifications.cancel({ notifications: [{id: 101}, {id: 102}, {id: 103}] });
+                    const notifsToSchedule = [];
+
+                    function addScheduledAlarm(timeStr, id, title, body) {
+                        if (!timeStr) return;
+                        const [hours, minutes] = timeStr.split(':').map(Number);
+                        let target = new Date();
+                        target.setHours(hours, minutes, 0, 0);
+
+                        if (target.getTime() <= Date.now()) {
+                            target.setDate(target.getDate() + 1);
+                        }
+
+                        notifsToSchedule.push({
+                            id: id,
+                            title: title,
+                            body: body,
+                            schedule: { at: target, allowWhileIdle: true },
+                            sound: 'notification.mp3',
+                            channelId: 'shift_alarms_v3'
+                        });
+                    }
+
+                    addScheduledAlarm(alarms.in, 101, "Hire Your VA Reminder", "⏰ Time to Clock In for your shift!");
+                    addScheduledAlarm(alarms.break, 102, "Hire Your VA Reminder", "⏰ Time for your official break!");
+                    addScheduledAlarm(alarms.out, 103, "Hire Your VA Reminder", "⏰ Shift completed, time to Clock Out!");
+
+                    if (notifsToSchedule.length > 0) {
+                        try {
+                            await window.LocalNotifications.schedule({ notifications: notifsToSchedule });
+                        } catch (exactError) {
+                            notifsToSchedule.forEach(n => delete n.schedule.allowWhileIdle);
+                            await window.LocalNotifications.schedule({ notifications: notifsToSchedule });
+                            await showCustomConfirm("Action Required", "Exact Alarms permission missing. For reliable background alarms, please go to Phone Settings -> Apps -> HireYourVA -> Allow 'Alarms & Reminders'.", true, "#f39c12");
+                        }
+                    }
+                } catch(e) {
+                    console.warn("Native local notification scheduling failed", e);
+                }
+            }
+
+            await showCustomConfirm("Alarms Saved", "Shift reminders saved.", true, "#f39c12");
+            alarmModal.style.display = 'none';
+        });
+
+        async function triggerNotification(msg) {
+            playNotificationSound();
+            if (window.LocalNotifications) {
+                try {
+                    await window.LocalNotifications.schedule({
+                        notifications: [
+                            {
+                                title: "Hire Your VA Reminder",
+                                body: msg,
+                                id: Math.floor(Math.random() * 100000),
+                                schedule: { at: new Date(Date.now() + 1000) },
+                                sound: 'notification.mp3',
+                                channelId: 'shift_alarms_v3'
+                            }
+                        ]
+                    });
+                } catch(e) {}
+            } else if (window.Notification && Notification.permission === "granted") {
+                new Notification("Hire Your VA Reminder", { body: msg, icon: "logo.png" });
+            }
+        }
+
+        function checkAlarms() {
+            if (window.LocalNotifications) return; 
+
+            const now = new Date(getRealTime()); 
+            const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            const lastTriggered = localStorage.getItem('last_alarm_trigger') || "";
+            if (lastTriggered === currentTimeStr) return; 
+
+            let triggered = false;
+            if (alarms.in === currentTimeStr) { 
+                triggerNotification("Time to Clock In!"); 
+                triggered = true; 
+            }
+            if (alarms.break === currentTimeStr) { 
+                triggerNotification("Time for your Break!"); 
+                triggered = true; 
+            }
+            if (alarms.out === currentTimeStr) { 
+                triggerNotification("Shift is over, time to Clock Out!"); 
+                triggered = true; 
+            }
+
+            if (triggered) {
+                localStorage.setItem('last_alarm_trigger', currentTimeStr);
+            }
+        }
+
+        setInterval(checkAlarms, 30000); 
+
+        // ================= HISTORY LOGIC =================
+        ui.viewHistoryBtn.addEventListener('click', () => {
+            const today = new Date(getRealTime());
+            const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+            ui.historyMonthPicker.value = currentMonth;
+            fetchMonthlyHistory(currentMonth);
+            ui.historyModal.style.display = 'flex';
+        });
+
+        ui.closeHistoryBtn.addEventListener('click', () => {
+            ui.historyModal.style.display = 'none';
+        });
+
+        ui.historyMonthPicker.addEventListener('change', (e) => {
+            if (e.target.value) {
+                fetchMonthlyHistory(e.target.value);
+            }
+        });
+
+        async function fetchMonthlyHistory(monthStr) {
+            ui.historyList.innerHTML = "<p style='color: #aaa; text-align: center;'>Fetching records...</p>";
+            try {
+                const q = query(collection(db, "attendance"), where("userId", "==", currentUser.uid));
+                const snap = await getDocs(q);
+                let records = [];
+                
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data.date && data.date.startsWith(monthStr)) {
+                        records.push(data);
+                    }
+                });
+
+                records.sort((a, b) => b.date.localeCompare(a.date)); 
+
+                if (records.length === 0) {
+                    ui.historyList.innerHTML = "<p style='color: #aaa; text-align: center;'>No attendance records found for this month.</p>";
+                    return;
+                }
+
+                let html = "";
+                records.forEach(rec => {
+                    let breakMs = 0;
+                    if(rec.breaks) {
+                        rec.breaks.forEach(b => {
+                            if(b.start && b.end) {
+                                breakMs += (b.end - b.start);
+                            }
+                        });
+                    }
+                    const netMs = rec.clockOut ? Math.max(0, rec.clockOut - rec.clockIn - breakMs) : 0;
+                    
+                    const inTimeStr = rec.clockIn ? formatTimeFromTimestamp(rec.clockIn) : "N/A";
+                    const outTimeStr = rec.clockOut ? formatTimeFromTimestamp(rec.clockOut) : (rec.status === "WORKING" || rec.status === "ON_BREAK" ? "Shift Active" : "Missing");
+                    
+                    html += `
+                        <div class="history-card">
+                            <h4>📅 ${rec.date} ${rec.halfDayMarked && !rec.adminRevokedLate ? '<span style="color:#e74c3c; font-size:12px;">(Late)</span>' : ''}</h4>
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>
+                                    <p><strong>In:</strong> ${inTimeStr}</p>
+                                    <p><strong>Out:</strong> ${outTimeStr}</p>
+                                </div>
+                                <div style="text-align: right;">
+                                    <p><strong>Break:</strong> ${msToHMS(breakMs)}</p>
+                                    <p><strong>Net Work:</strong> <span style="color:#2ecc71; font-weight:bold;">${msToHMS(netMs)}</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                ui.historyList.innerHTML = html;
+
+            } catch (error) {
+                ui.historyList.innerHTML = `<p style="color:#e74c3c;">Error: ${error.message}</p>`;
+            }
+        }
+
+        // ================= ATTENDANCE & FIREBASE SETUP LOGIC =================
+        function playNotificationSound() {
+            try {
+                const audio = new Audio('notification.mp3');
+                audio.play().catch(() => fallbackBeep());
+            } catch(e) {
+                fallbackBeep();
+            }
+        }
+
+        function fallbackBeep() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine'; 
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+                osc.connect(gain); 
+                gain.connect(audioCtx.destination); 
+                osc.start(); 
+                osc.stop(audioCtx.currentTime + 0.5);
+            } catch (e) {}
+        }
+
+        function listenToAdminBroadcasts() {
+            const broadcastDocRef = doc(db, "broadcasts", "latest_broadcast");
+            onSnapshot(broadcastDocRef, async (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.active) {
+                        const dismissedId = localStorage.getItem('dismissed_broadcast_id');
+                        if (dismissedId !== String(data.timestamp)) {
+                            ui.broadcastTitle.innerText = data.title || "ANNOUNCEMENT FROM ADMIN";
+                            ui.broadcastMsg.innerText = data.message || "";
+                            ui.broadcastOverlay.style.display = "flex";
+                            
+                            playNotificationSound();
+
+                            if (window.LocalNotifications) {
+                                try {
+                                    await window.LocalNotifications.schedule({
+                                        notifications: [
+                                            {
+                                                title: data.title || "Admin Broadcast",
+                                                body: "New Urgent Announcement received!",
+                                                id: Math.floor(Math.random() * 100000),
+                                                schedule: { at: new Date(Date.now() + 100) },
+                                                sound: 'notification.mp3',
+                                                channelId: 'shift_alarms_v3'
+                                            }
+                                        ]
+                                    });
+                                } catch(e) {}
+                            } else if (window.Notification && Notification.permission === "granted") {
+                                new Notification("Admin Broadcast", { body: "New Urgent Announcement received!", icon: "logo.png" });
+                            }
+                        }
+                    } else {
+                        ui.broadcastOverlay.style.display = "none";
+                    }
+                }
+            });
+        }
+
+        ui.btnAckBroadcast.addEventListener('click', async () => {
+            try {
+                const nowTime = getRealTime();
+                const ackObj = {
+                    uid: currentUser.uid,
+                    name: employeeName,
+                    time: nowTime
+                };
+
+                const docRef = doc(db, "broadcasts", "latest_broadcast");
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    localStorage.setItem('dismissed_broadcast_id', String(data.timestamp));
+                    
+                    await updateDoc(docRef, {
+                        acknowledgements: arrayUnion(ackObj)
+                    });
+
+                    const historyDocRef = doc(db, "broadcast_history", String(data.timestamp));
+                    await updateDoc(historyDocRef, {
+                        acknowledgements: arrayUnion(ackObj)
+                    }).catch(e => {});
+                }
+            } catch (e) {}
+            ui.broadcastOverlay.style.display = "none";
+        });
+
+        function getTodayStr() {
+            const d = new Date(getRealTime());
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function getYesterdayStr() {
+            const d = new Date(getRealTime()); 
+            d.setDate(d.getDate() - 1);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function formatTimeFromTimestamp(ms) {
+            return new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function msToHMS(ms) {
+            const secs = Math.floor(ms / 1000);
+            const h = String(Math.floor(secs / 3600)).padStart(2, '0');
+            const m = String(Math.floor((secs % 3600) / 60)).padStart(2, '0');
+            const s = String(secs % 60).padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+
+        // ================= LOCATION FETCH =================
+        function getUserLocation() {
+            return new Promise(async (resolve) => {
+                const isNativeApp = !!window.LocalNotifications || !!window.PushNotifications;
+                const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const requiresGPS = isNativeApp || isMobileDevice;
+
+                if (window.Geolocation && isNativeApp) {
+                    try {
+                        const pos = await window.Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 25000 });
+                        resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                    } catch(e) {
+                        resolve({ error: "Location Denied or Timeout" });
+                    }
+                } else if (navigator.geolocation && requiresGPS) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            resolve({
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude
+                            });
+                        },
+                        (error) => {
+                            resolve({ error: "Location Denied or Timeout" });
+                        },
+                        { enableHighAccuracy: true, timeout: 25000, maximumAge: 0 }
+                    );
+                } else {
+                    resolve(requiresGPS ? { error: "No GPS supported" } : { lat: "Desktop PC", lng: "Office Network" });
+                }
+            });
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const docSnap = await getDoc(doc(db, "employees", user.uid));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.isActive === false) {
+                        await signOut(auth);
+                        await showCustomConfirm("Access Denied", "Your account has been terminated/blocked by Admin.", true, "#e74c3c");
+                        window.location.href = "index.html"; 
+                        return;
+                    }
+                    employeeName = data.name || data.fullName || "Employee";
+                    window.currentUserData = data; 
+                }
+
+                currentUser = user;
+                ui.welcome.innerText = `Welcome, ${employeeName.split(' ')[0]}`;
+                
+                listenForAppUpdates();
+                await loadAttendance();
+                checkBadgeCount(user.uid);
+                listenToAdminBroadcasts();
+                initPushNotifications();
+
+            } else {
+                window.location.href = "index.html";
+            }
+        });
+
+        async function checkBadgeCount(uid) {
+            try {
+                const q = query(collection(db, "leaves"), where("uid", "==", uid));
+                const snap = await getDocs(q);
+                const badge = document.getElementById('notifBadge');
+                let resolvedCount = 0;
+                
+                snap.forEach(docSnap => {
+                    if (docSnap.data().status === "APPROVED" || docSnap.data().status === "REJECTED") {
+                        resolvedCount++;
+                    }
+                });
+                
+                if (resolvedCount > 0) {
+                    badge.innerText = resolvedCount; 
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            } catch (error) {}
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            signOut(auth).then(() => {
+                window.location.href = "index.html";
+            });
+        });
+
+        async function loadAttendance() {
+            const todayStr = getTodayStr();
+            const yesterdayStr = getYesterdayStr();
+            
+            const yDocRef = doc(db, "attendance", `${currentUser.uid}_${yesterdayStr}`);
+            const ySnap = await getDoc(yDocRef);
+            
+            if (ySnap.exists() && (ySnap.data().status === "WORKING" || ySnap.data().status === "ON_BREAK")) {
+                attendanceDocId = `${currentUser.uid}_${yesterdayStr}`;
+                attData = ySnap.data();
+            } else {
+                attendanceDocId = `${currentUser.uid}_${todayStr}`;
+                const tSnap = await getDoc(doc(db, "attendance", attendanceDocId));
+                if (tSnap.exists()) {
+                    attData = tSnap.data();
+                } else {
+                    attData = {
+                        clockIn: null,
+                        clockOut: null,
+                        breaks: [],
+                        status: "OUT",
+                        halfDayMarked: false,
+                        adminRevokedLate: false
+                    };
+                }
+            }
+            if (!attData.breaks) {
+                attData.breaks = [];
+            }
+            updateUI();
+        }
+
+        function calcTimes() {
+            if (!attData.clockIn) {
+                return { netMs: 0, breakMs: 0 };
+            }
+            
+            let breakMs = 0;
+            attData.breaks.forEach(b => {
+                const breakEnd = b.end || (attData.status === "ON_BREAK" ? getRealTime() : b.start);
+                breakMs += (breakEnd - b.start);
+            });
+            
+            const endRef = attData.clockOut || getRealTime();
+            const netMs = Math.max(0, (endRef - attData.clockIn) - breakMs);
+            
+            return { netMs, breakMs };
+        }
+
+        function updateUI() {
+            ui.resetBtn.style.display = "none";
+            ui.lateWarning.style.display = (attData.halfDayMarked && !attData.adminRevokedLate) ? "block" : "none";
+
+            if (attData.status === "WORKING") {
+                ui.status.innerText = "Working";
+                ui.status.style.color = "#2ecc71";
+                ui.clockInBtn.disabled = true;
+                ui.breakBtn.disabled = false;
+                ui.clockOutBtn.disabled = false;
+                ui.breakBtn.innerText = "Take Break (ON)";
+                startTimer();
+            } else if (attData.status === "ON_BREAK") {
+                ui.status.innerText = "On Break";
+                ui.status.style.color = "#f39c12";
+                ui.clockInBtn.disabled = true;
+                ui.breakBtn.disabled = false;
+                ui.clockOutBtn.disabled = true;
+                ui.breakBtn.innerText = "Resume Work (OFF)";
+                startTimer(); 
+            } else if (attData.status === "COMPLETED") {
+                ui.status.innerText = "Shift Ended";
+                ui.status.style.color = "#e74c3c";
+                ui.clockInBtn.disabled = true;
+                ui.breakBtn.disabled = true;
+                ui.clockOutBtn.disabled = true;
+                ui.resetBtn.style.display = "inline-block";
+                clearInterval(timerInterval);
+                renderStaticTimes();
+            } else {
+                ui.status.innerText = "Not Started";
+                ui.status.style.color = "#aaa";
+                ui.clockInBtn.disabled = false;
+                ui.breakBtn.disabled = true;
+                ui.clockOutBtn.disabled = true;
+                ui.inTime.innerText = "--:--";
+                ui.outTime.innerText = "--:--";
+                ui.netTime.innerText = "00:00:00";
+                ui.breakTime.innerText = "00:00:00";
+                ui.workedTime.innerText = "00:00:00";
+            }
+            if (attData.clockIn) {
+                ui.inTime.innerText = formatTimeFromTimestamp(attData.clockIn);
+            }
+            if (attData.clockOut) {
+                ui.outTime.innerText = formatTimeFromTimestamp(attData.clockOut);
+            }
+        }
+
+        function renderStaticTimes() {
+            const { netMs, breakMs } = calcTimes();
+            ui.netTime.innerText = msToHMS(netMs);
+            ui.workedTime.innerText = msToHMS(netMs);
+            ui.breakTime.innerText = msToHMS(breakMs);
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(renderStaticTimes, 1000);
+            renderStaticTimes();
+        }
+
+        // ================= BUTTON ACTIONS (DYNAMIC SHIFT LATE LOGIC ADDED) =================
+        ui.clockInBtn.addEventListener('click', async () => {
+            try {
+                ui.locStatus.innerText = "Verifying Secure Time...";
+                ui.clockInBtn.disabled = true;
+                
+                await syncSecureTime(); 
+                const secureTimestamp = getRealTime();
+                const locationData = await getUserLocation();
+                ui.locStatus.innerText = "";
+                
+                const secureDate = new Date(secureTimestamp);
+                const h = secureDate.getHours();
+                const m = secureDate.getMinutes();
+                let isLate = false;
+                
+                // Check employee's assigned shift for late rules
+                const userShift = window.currentUserData?.shiftTiming || '05:30 PM - 02:30 AM';
+                
+                if (userShift.includes('6:00') || userShift.includes('06:00') || userShift.includes('18:00')) {
+                    if (h > 18 || (h === 18 && m > 0) || h < 12) {
+                        isLate = true;
+                    }
+                } else { // Default to Shift 1
+                    if (h > 17 || (h === 17 && m > 30) || h < 12) {
+                        isLate = true;
+                    }
+                }
+                
+                attData = { 
+                    clockIn: secureTimestamp, 
+                    clockOut: null,
+                    breaks: [],
+                    status: "WORKING",
+                    userId: currentUser.uid, 
+                    date: getTodayStr(),
+                    halfDayMarked: isLate,
+                    adminRevokedLate: false,
+                    inLocation: locationData
+                };
+                
+                await setDoc(doc(db, "attendance", attendanceDocId), attData);
+                updateUI();
+                showCustomConfirm("Clocked In", "Your attendance has been marked successfully.", true, "#2ecc71");
+            } catch(error) {
+                showCustomConfirm("Error", "Failed to clock in: " + error.message, true, "#e74c3c");
+                ui.clockInBtn.disabled = false;
+                ui.locStatus.innerText = "";
+            }
+        });
+
+        ui.breakBtn.addEventListener('click', async () => {
+            try {
+                ui.locStatus.innerText = "Syncing Time...";
+                await syncSecureTime();
+                const secureTimestamp = getRealTime();
+
+                if (attData.status === "WORKING") {
+                    attData.status = "ON_BREAK";
+                    attData.breaks.push({
+                        start: secureTimestamp, 
+                        end: null
+                    });
+                } else if (attData.status === "ON_BREAK") {
+                    attData.status = "WORKING";
+                    attData.breaks[attData.breaks.length - 1].end = secureTimestamp;
+                }
+                
+                await updateDoc(doc(db, "attendance", attendanceDocId), {
+                    status: attData.status,
+                    breaks: attData.breaks
+                });
+                ui.locStatus.innerText = "";
+                updateUI();
+            } catch(error) {
+                showCustomConfirm("Error", "Failed to update break: " + error.message, true, "#e74c3c");
+                ui.locStatus.innerText = "";
+            }
+        });
+
+        ui.clockOutBtn.addEventListener('click', async () => {
+            const confirmed = await showCustomConfirm("Clock Out Confirmation", "Are you sure you want to clock out for today?", false, "#e74c3c");
+            if (confirmed) {
+                try {
+                    ui.locStatus.innerText = "Finalizing Time...";
+                    ui.clockOutBtn.disabled = true;
+                    
+                    await syncSecureTime();
+                    const secureTimestamp = getRealTime();
+                    const locationData = await getUserLocation();
+                    ui.locStatus.innerText = "";
+                    
+                    attData.status = "COMPLETED";
+                    attData.clockOut = secureTimestamp; 
+                    const { netMs, breakMs } = calcTimes();
+                    
+                    await updateDoc(doc(db, "attendance", attendanceDocId), { 
+                        status: attData.status,
+                        clockOut: attData.clockOut,
+                        netMinutes: Math.floor(netMs / 60000),
+                        totalBreakMinutes: Math.floor(breakMs / 60000),
+                        outLocation: locationData
+                    });
+                    updateUI();
+                    showCustomConfirm("Shift Ended", "You have successfully clocked out.", true, "#3498db");
+                } catch(error) {
+                    showCustomConfirm("Error", "Failed to clock out: " + error.message, true, "#e74c3c");
+                    ui.clockOutBtn.disabled = false;
+                    ui.locStatus.innerText = "";
+                }
+            }
+        });
+
+        ui.resetBtn.addEventListener('click', async () => {
+            const confirmed = await showCustomConfirm("Testing: Reset Shift", "Do you want to delete today's attendance and start over?", false, "#3498db");
+            if (confirmed) {
+                await deleteDoc(doc(db, "attendance", attendanceDocId));
+                attData = {
+                    clockIn: null,
+                    clockOut: null,
+                    breaks: [],
+                    status: "OUT",
+                    halfDayMarked: false
+                };
+                updateUI();
+            }
+        });
+    </script>
+</body>
+</html>

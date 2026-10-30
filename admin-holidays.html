@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIRE YOUR VA - Holiday Calendar</title>
+    <!-- PWA & iPhone (iOS) Support Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2ecc71">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HireYourVA">
+    <link rel="apple-touch-icon" href="logo.png">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1a; color: #f5f5dc; margin: 0; padding: 0; }
+        .header { background-color: #242424; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .header img { max-height: 40px; border-radius: 4px; }
+        .btn-back { background-color: #555; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; text-decoration: none; }
+        
+        .container { padding: 20px; max-width: 600px; margin: 20px auto; }
+        
+        .add-card { background: #242424; padding: 20px; border-radius: 8px; border-top: 4px solid #3498db; margin-bottom: 25px; }
+        .add-card h2 { color: #3498db; margin-top: 0; }
+        
+        .input-group { display: flex; flex-direction: column; margin-bottom: 15px; }
+        label { font-size: 13px; color: #aaa; margin-bottom: 5px; }
+        input { padding: 10px; border: 1px solid #444; border-radius: 6px; background: #333; color: white; }
+        
+        button.submit-btn { width: 100%; padding: 12px; background-color: #3498db; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        button.submit-btn:hover { background-color: #2980b9; }
+        
+        .holiday-list { background: #1a1a1a; }
+        .holiday-item { display: flex; justify-content: space-between; align-items: center; background: #242424; padding: 15px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #e74c3c; }
+        .holiday-item h3 { margin: 0; color: #fff; font-size: 16px; }
+        .holiday-item p { margin: 5px 0 0 0; color: #aaa; font-size: 14px; }
+        .btn-delete { background: transparent; color: #e74c3c; border: 1px solid #e74c3c; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-delete:hover { background: #e74c3c; color: white; }
+    </style>
+    <!-- HYVA professional theme layer (additive; remove these 2 lines to roll back) -->
+    <link rel="stylesheet" href="hyva-theme.css">
+    <script src="hyva-motion.js"></script>
+</head>
+<body>
+
+    <div class="header">
+        <img src="logo.png" alt="Hire Your VA" onerror="this.style.display='none'">
+        <a href="admin-dashboard.html" class="btn-back">Back to Dashboard</a>
+    </div>
+
+    <div class="container">
+        <!-- Add Holiday Form -->
+        <div class="add-card">
+            <h2>Add Company Holiday</h2>
+            <form id="holidayForm">
+                <div class="input-group">
+                    <label>Holiday Name / Occasion</label>
+                    <input type="text" id="holidayName" placeholder="e.g., Diwali, Christmas" required>
+                </div>
+                <div class="input-group">
+                    <label>Date</label>
+                    <input type="date" id="holidayDate" required>
+                </div>
+                <button type="submit" class="submit-btn" id="addBtn">Save Holiday</button>
+                <div id="statusMsg" style="text-align: center; margin-top: 10px;"></div>
+            </form>
+        </div>
+
+        <!-- List of Holidays -->
+        <h2 style="color: #e74c3c; border-bottom: 2px solid #e74c3c; padding-bottom: 5px;">Saved Holidays</h2>
+        <div id="holidaysContainer">
+            <p style="color: #aaa; text-align: center;">Loading holidays...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAw8NhVWaoMbm-CiED4M_K02wOSRtV2LUc",
+            authDomain: "hire-your-va-hr.firebaseapp.com",
+            projectId: "hire-your-va-hr",
+            storageBucket: "hire-your-va-hr.firebasestorage.app",
+            messagingSenderId: "75356368308",
+            appId: "1:75356368308:web:be5c4cfaa62c72efced6e1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) window.location.href = "index.html";
+            else fetchHolidays();
+        });
+
+        // Save Holiday
+        document.getElementById('holidayForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const statusMsg = document.getElementById('statusMsg');
+            document.getElementById('addBtn').disabled = true;
+            statusMsg.innerText = "Saving...";
+            statusMsg.style.color = "#f39c12";
+
+            const holidayData = {
+                name: document.getElementById('holidayName').value,
+                date: document.getElementById('holidayDate').value,
+                createdAt: Date.now()
+            };
+
+            try {
+                await addDoc(collection(db, "holidays"), holidayData);
+                statusMsg.innerText = "Holiday Added!";
+                statusMsg.style.color = "#2ecc71";
+                document.getElementById('holidayForm').reset();
+                fetchHolidays();
+            } catch (error) {
+                statusMsg.innerText = "Error: " + error.message;
+                statusMsg.style.color = "#e74c3c";
+            } finally {
+                document.getElementById('addBtn').disabled = false;
+                setTimeout(() => statusMsg.innerText = "", 3000);
+            }
+        });
+
+        // Fetch Holidays
+        async function fetchHolidays() {
+            const listDiv = document.getElementById('holidaysContainer');
+            try {
+                const snap = await getDocs(collection(db, "holidays"));
+                let holidays = [];
+                snap.forEach(doc => holidays.push({ id: doc.id, ...doc.data() }));
+
+                // Sort by date upcoming
+                holidays.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                if (holidays.length === 0) {
+                    listDiv.innerHTML = "<p style='text-align: center; color: #aaa;'>No holidays added yet.</p>";
+                    return;
+                }
+
+                listDiv.innerHTML = "";
+                holidays.forEach(h => {
+                    const div = document.createElement('div');
+                    div.className = "holiday-item";
+                    
+                    // Format Date nicely
+                    const dateObj = new Date(h.date);
+                    const formattedDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+                    div.innerHTML = `
+                        <div>
+                            <h3>${h.name}</h3>
+                            <p>${formattedDate}</p>
+                        </div>
+                        <button class="btn-delete" onclick="deleteHoliday('${h.id}')">Delete</button>
+                    `;
+                    listDiv.appendChild(div);
+                });
+            } catch (error) {
+                listDiv.innerHTML = "<p style='color: red;'>Failed to load holidays.</p>";
+            }
+        }
+
+        // Make delete function global
+        window.deleteHoliday = async function(id) {
+            if(!confirm("Delete this holiday?")) return;
+            try {
+                await deleteDoc(doc(db, "holidays", id));
+                fetchHolidays();
+            } catch(e) { alert("Error deleting: " + e.message); }
+        }
+    </script>
+</body>
+</html>

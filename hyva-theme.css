@@ -1,0 +1,379 @@
+/* ==========================================================================
+   HYVA — Professional Theme Layer  ·  Forest Graphite × Acid Mint
+   --------------------------------------------------------------------------
+   PURELY ADDITIVE. This file only restyles; it adds no behaviour and does not
+   rename or remove any element, id, class, script or Firebase connection.
+   To roll back: delete the <link> to this file (and hyva-motion.js) from the
+   pages. Nothing else needs to change.
+   ========================================================================== */
+
+:root {
+  --hy-graphite:      #18251D;   /* Forest Graphite */
+  --hy-graphite-1:    #1E2F25;   /* raised surface  */
+  --hy-graphite-2:    #25382C;   /* inputs / wells  */
+  --hy-graphite-0:    #101913;   /* deepest         */
+  --hy-mint:          #B7FF72;   /* Acid Mint       */
+  --hy-mint-dim:      #8ED654;
+  --hy-mint-glow:     rgba(183, 255, 114, .35);
+  --hy-text:          #EAF3E4;
+  --hy-text-dim:      #9DB0A2;
+  --hy-line:          rgba(183, 255, 114, .12);
+
+  /* Figma-style motion curves */
+  --hy-ease-out:      cubic-bezier(.22, 1, .36, 1);
+  --hy-ease-spring:   cubic-bezier(.34, 1.56, .64, 1);
+  --hy-ease-smooth:   cubic-bezier(.4, 0, .2, 1);
+
+  /* Emboss (raised) + deboss (pressed / inset) */
+  --hy-emboss:
+      6px 6px 14px rgba(0, 0, 0, .50),
+     -4px -4px 12px rgba(183, 255, 114, .045),
+      inset 1px 1px 1px rgba(255, 255, 255, .07),
+      inset -1px -1px 2px rgba(0, 0, 0, .35);
+  --hy-emboss-hover:
+      8px 10px 20px rgba(0, 0, 0, .55),
+     -4px -4px 14px rgba(183, 255, 114, .07),
+      inset 1px 1px 1px rgba(255, 255, 255, .10),
+      inset -1px -1px 2px rgba(0, 0, 0, .35);
+  --hy-deboss:
+      inset 3px 3px 7px rgba(0, 0, 0, .55),
+      inset -2px -2px 5px rgba(183, 255, 114, .05);
+}
+
+/* ---------- Base ---------- */
+html { scroll-behavior: smooth; }
+
+body {
+  background:
+    radial-gradient(1100px 600px at 85% -10%, rgba(183,255,114,.07), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(183,255,114,.05), transparent 60%),
+    var(--hy-graphite) !important;
+  background-attachment: fixed !important;
+  color: var(--hy-text) !important;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--hy-mint); color: var(--hy-graphite); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--hy-graphite-0); }
+::-webkit-scrollbar-thumb {
+  background: var(--hy-graphite-2); border-radius: 10px;
+  border: 2px solid var(--hy-graphite-0);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--hy-mint-dim); }
+
+/* ---------- Header ---------- */
+.header {
+  background: linear-gradient(180deg, var(--hy-graphite-1), var(--hy-graphite)) !important;
+  border-bottom: 1px solid var(--hy-line);
+  box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05) !important;
+  backdrop-filter: blur(10px);
+}
+.header img { filter: drop-shadow(0 2px 6px rgba(0,0,0,.5)); }
+#welcomeMsg { color: var(--hy-text-dim) !important; letter-spacing: .2px; }
+
+/* ---------- Headings ---------- */
+h2 {
+  color: var(--hy-mint) !important;
+  border-bottom: 1px solid var(--hy-line) !important;
+  letter-spacing: .3px;
+  position: relative;
+}
+h2:not(.login-card h2)::after {
+  content: ""; position: absolute; left: 0; bottom: -1px; height: 2px; width: 46px;
+  background: var(--hy-mint); border-radius: 2px;
+  box-shadow: 0 0 12px var(--hy-mint-glow);
+}
+
+/* ---------- Cards / panels (embossed) ---------- */
+.card, .login-card, .summary-box, .summary-banner, .history-card,
+.history-section, .history-list-box, .holiday-item, .notif-card-item,
+.leave-item, .profile-detail, .stat-row, .modal-content, .modal-box,
+.custom-popup-box {
+  background: linear-gradient(145deg, var(--hy-graphite-1), var(--hy-graphite)) !important;
+  border-color: var(--hy-line);
+  box-shadow: var(--hy-emboss) !important;
+  transition: transform .35s var(--hy-ease-out), box-shadow .35s var(--hy-ease-out);
+}
+.card, .login-card { border-top: 3px solid var(--hy-mint) !important; border-radius: 14px !important; }
+.card:hover, .holiday-item:hover, .notif-card-item:hover, .history-card:hover, .leave-item:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--hy-emboss-hover) !important;
+}
+.modal-overlay { backdrop-filter: blur(6px); background: rgba(10, 18, 13, .72) !important; }
+
+/* ---------- Forms (embossed wells) ---------- */
+label { color: var(--hy-text-dim) !important; letter-spacing: .3px; transition: color .25s var(--hy-ease-smooth); }
+.input-group:focus-within label { color: var(--hy-mint) !important; }
+
+input, select, textarea, .edit-input, .alarm-input, .month-picker {
+  background: var(--hy-graphite-2) !important;
+  color: var(--hy-text) !important;
+  border: 1px solid rgba(255,255,255,.06) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--hy-deboss) !important;
+  transition: border-color .25s var(--hy-ease-smooth), box-shadow .3s var(--hy-ease-out), transform .3s var(--hy-ease-out);
+}
+input::placeholder, textarea::placeholder { color: rgba(157,176,162,.55); }
+input:focus, select:focus, textarea:focus, .edit-input:focus, .alarm-input:focus {
+  outline: none !important;
+  border-color: var(--hy-mint) !important;
+  box-shadow: var(--hy-deboss), 0 0 0 3px var(--hy-mint-glow), 0 0 18px rgba(183,255,114,.18) !important;
+}
+input[type="checkbox"], input[type="radio"] { accent-color: var(--hy-mint); box-shadow: none !important; }
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator { filter: invert(86%) sepia(30%) saturate(700%) hue-rotate(40deg); cursor: pointer; }
+
+/* ---------- Buttons (embossed, tactile) ---------- */
+button, .btn-back, .cal-btn, .action-btn {
+  position: relative;
+  overflow: hidden;
+  transition: transform .3s var(--hy-ease-spring), box-shadow .3s var(--hy-ease-out),
+              background-color .25s var(--hy-ease-smooth), filter .25s var(--hy-ease-smooth) !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Primary — Acid Mint */
+button.submit-btn, button.login-btn, .btn-confirm-ok,
+button.action-btn.btn-in, button.action-btn.btn-update, button.action-btn.btn-alarm {
+  background: linear-gradient(180deg, #C9FF94 0%, var(--hy-mint) 45%, var(--hy-mint-dim) 100%) !important;
+  color: var(--hy-graphite) !important;
+  border: 1px solid rgba(255,255,255,.25) !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  letter-spacing: .4px;
+  text-shadow: 0 1px 0 rgba(255,255,255,.35);
+  box-shadow:
+    0 8px 18px rgba(0,0,0,.45),
+    0 0 22px rgba(183,255,114,.20),
+    inset 0 2px 1px rgba(255,255,255,.65),
+    inset 0 -3px 5px rgba(60,110,20,.45) !important;
+}
+
+/* Neutral / back / cancel */
+.btn-back, .cal-btn, .btn-confirm-cancel, button.action-btn.btn-history, button.action-btn.btn-break {
+  background: linear-gradient(180deg, var(--hy-graphite-2), var(--hy-graphite-1)) !important;
+  color: var(--hy-text) !important;
+  border: 1px solid var(--hy-line) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--hy-emboss) !important;
+}
+
+/* Close (X) stays a plain icon button */
+.close-btn { box-shadow: none !important; background: transparent !important; }
+.close-btn:hover:not(:disabled) { color: var(--hy-mint) !important; transform: rotate(90deg) scale(1.1); filter: none; }
+.close-btn::after { display: none; }
+
+/* Danger — keeps its red meaning, now embossed */
+.logout-btn, .btn-delete {
+  background: linear-gradient(180deg, #f0604f, #c0392b) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 6px 14px rgba(0,0,0,.45), inset 0 1px 1px rgba(255,255,255,.35), inset 0 -2px 4px rgba(90,10,0,.45) !important;
+}
+
+button:hover:not(:disabled), .btn-back:hover, .cal-btn:hover {
+  transform: translateY(-2px) scale(1.015);
+  filter: brightness(1.06);
+}
+button.submit-btn:hover, button.login-btn:hover, .btn-confirm-ok:hover,
+button.action-btn.btn-in:hover, button.action-btn.btn-update:hover, button.action-btn.btn-alarm:hover {
+  box-shadow: 0 12px 26px rgba(0,0,0,.5), 0 0 30px rgba(183,255,114,.38),
+              inset 0 2px 1px rgba(255,255,255,.7), inset 0 -3px 5px rgba(60,110,20,.45) !important;
+}
+/* Pressed = debossed */
+button:active:not(:disabled), .btn-back:active, .cal-btn:active {
+  transform: translateY(1px) scale(.985) !important;
+  box-shadow: inset 3px 4px 9px rgba(0,0,0,.55), inset -1px -1px 3px rgba(255,255,255,.08) !important;
+}
+button:disabled { opacity: .45; cursor: not-allowed; filter: grayscale(.4); }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--hy-mint); outline-offset: 2px; }
+
+/* Light sweep across buttons on hover (Figma-style shine) */
+button::after, .btn-back::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.28) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform .7s var(--hy-ease-out);
+}
+button:hover:not(:disabled)::after, .btn-back:hover::after { transform: translateX(120%); }
+
+/* Ripple (spawned by hyva-motion.js) */
+.hy-ripple {
+  position: absolute; border-radius: 50%; pointer-events: none;
+  background: rgba(255,255,255,.45); transform: scale(0);
+  animation: hy-ripple .65s var(--hy-ease-out) forwards;
+}
+@keyframes hy-ripple { to { transform: scale(4); opacity: 0; } }
+
+/* Outlined mint style for the APK download link (inline-blue anchors) */
+a[download][style*="#3498db"] {
+  background: linear-gradient(180deg, var(--hy-graphite-2), var(--hy-graphite-1)) !important;
+  color: var(--hy-mint) !important;
+  border: 1px solid var(--hy-mint) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--hy-emboss) !important;
+  transition: transform .3s var(--hy-ease-spring), box-shadow .3s var(--hy-ease-out) !important;
+}
+a[download][style*="#3498db"]:hover { transform: translateY(-2px); box-shadow: var(--hy-emboss-hover), 0 0 20px var(--hy-mint-glow) !important; }
+
+/* ---------- Links ---------- */
+a { transition: color .2s var(--hy-ease-smooth); }
+.forgot-link, .map-link { color: var(--hy-mint) !important; }
+
+/* ---------- Bottom navigation ---------- */
+.bottom-nav {
+  background: linear-gradient(180deg, var(--hy-graphite-1), var(--hy-graphite-0)) !important;
+  border-top: 1px solid var(--hy-line) !important;
+  box-shadow: 0 -10px 30px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05) !important;
+  backdrop-filter: blur(12px);
+}
+.nav-item { transition: transform .3s var(--hy-ease-spring), color .25s var(--hy-ease-smooth) !important; }
+.nav-item:hover { transform: translateY(-3px); color: var(--hy-mint) !important; }
+.nav-item.active { color: var(--hy-mint) !important; border-top-color: var(--hy-mint) !important; }
+.nav-item.active .nav-icon { filter: drop-shadow(0 0 8px var(--hy-mint-glow)); transform: scale(1.15); }
+.nav-icon { transition: transform .35s var(--hy-ease-spring), filter .3s; }
+
+/* ---------- Notification bell ---------- */
+.notif-container {
+  background: linear-gradient(145deg, var(--hy-graphite-2), var(--hy-graphite-1)) !important;
+  border: 1px solid var(--hy-line) !important;
+  box-shadow: var(--hy-emboss) !important;
+  transition: transform .3s var(--hy-ease-spring);
+}
+.notif-container:hover { transform: scale(1.08) rotate(-6deg); }
+.notif-badge { animation: hy-pulse 1.8s var(--hy-ease-smooth) infinite; }
+@keyframes hy-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(231,76,60,.6); }
+  70%  { box-shadow: 0 0 0 9px rgba(231,76,60,0); }
+  100% { box-shadow: 0 0 0 0 rgba(231,76,60,0); }
+}
+
+/* ---------- Accent colour remap (colour only, no layout change) ----------
+   The original green (#2ecc71) is re-mapped to Acid Mint wherever it is used
+   inline. Red / amber / blue remain, because they carry meaning (late,
+   rejected, pending, etc.).                                              */
+[style*="#2ecc71"], [style*="#2ECC71"] { border-color: var(--hy-mint) !important; }
+span[style*="color: #2ecc71"], p[style*="color: #2ecc71"], div[style*="color: #2ecc71"],
+span[style*="color:#2ecc71"], p[style*="color:#2ecc71"], div[style*="color:#2ecc71"],
+b[style*="#2ecc71"], strong[style*="#2ecc71"] { color: var(--hy-mint) !important; }
+
+.status-badge, .holiday-badge, .late-tag, .legend-item, .status {
+  border-radius: 999px; letter-spacing: .3px;
+  box-shadow: inset 1px 1px 2px rgba(255,255,255,.08), inset -1px -1px 3px rgba(0,0,0,.35);
+}
+
+/* ---------- Tables ---------- */
+table { border-collapse: separate; border-spacing: 0; }
+th { background: var(--hy-graphite-0) !important; color: var(--hy-mint) !important; letter-spacing: .5px; }
+tbody tr { transition: background-color .25s var(--hy-ease-smooth); }
+tbody tr:hover { background: rgba(183,255,114,.05) !important; }
+
+/* ---------- Toasts / popups ---------- */
+#toastBanner { border-radius: 12px !important; box-shadow: 0 14px 36px rgba(0,0,0,.55), 0 0 24px var(--hy-mint-glow) !important; }
+.custom-popup-box, .modal-content, .modal-box { animation: hy-pop .45s var(--hy-ease-spring) both; }
+@keyframes hy-pop { from { opacity: 0; transform: translateY(18px) scale(.94); } to { opacity: 1; transform: none; } }
+
+/* ==========================================================================
+   MOTION — page entrance + staggered reveal (Figma "smart animate" feel)
+   ========================================================================== */
+.header                { animation: hy-drop .6s var(--hy-ease-out) both; }
+.bottom-nav            { animation: hy-rise .6s var(--hy-ease-out) .15s both; }
+.container > *, .card, .login-card, .holiday-item, .notif-card-item,
+.history-card, .leave-item, .summary-box, .grid > * {
+  animation: hy-rise .65s var(--hy-ease-out) both;
+}
+.container > *:nth-child(1), .grid > *:nth-child(1) { animation-delay: .05s; }
+.container > *:nth-child(2), .grid > *:nth-child(2) { animation-delay: .12s; }
+.container > *:nth-child(3), .grid > *:nth-child(3) { animation-delay: .19s; }
+.container > *:nth-child(4), .grid > *:nth-child(4) { animation-delay: .26s; }
+.container > *:nth-child(5), .grid > *:nth-child(5) { animation-delay: .33s; }
+.container > *:nth-child(n+6), .grid > *:nth-child(n+6) { animation-delay: .4s; }
+
+@keyframes hy-rise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+@keyframes hy-drop { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: none; } }
+
+/* ==========================================================================
+   LOADERS
+   ========================================================================== */
+
+/* 1) Branded splash shown on every page load (injected by hyva-motion.js) */
+#hy-splash {
+  position: fixed; inset: 0; z-index: 2147483000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px;
+  background: radial-gradient(700px 500px at 50% 40%, #23382b, var(--hy-graphite-0));
+  transition: opacity .55s var(--hy-ease-smooth), visibility .55s;
+}
+#hy-splash.hy-out { opacity: 0; visibility: hidden; pointer-events: none; }
+.hy-orbit { position: relative; width: 76px; height: 76px; }
+.hy-orbit i {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 3px solid transparent;
+}
+.hy-orbit i:nth-child(1) { border-top-color: var(--hy-mint); animation: hy-spin 1.1s linear infinite; filter: drop-shadow(0 0 8px var(--hy-mint-glow)); }
+.hy-orbit i:nth-child(2) { inset: 11px; border-right-color: rgba(183,255,114,.55); animation: hy-spin 1.6s linear infinite reverse; }
+.hy-orbit i:nth-child(3) { inset: 23px; border-bottom-color: rgba(183,255,114,.3); animation: hy-spin 2.2s linear infinite; }
+.hy-orbit::after {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px;
+  border-radius: 50%; background: var(--hy-mint); box-shadow: 0 0 18px var(--hy-mint);
+  animation: hy-beat 1.1s var(--hy-ease-smooth) infinite;
+}
+.hy-splash-text {
+  font: 700 12px/1 'Inter','Segoe UI',sans-serif; letter-spacing: 6px; text-transform: uppercase;
+  color: var(--hy-mint); opacity: .85;
+}
+.hy-bar { width: 150px; height: 4px; border-radius: 4px; background: var(--hy-graphite-2); box-shadow: var(--hy-deboss); overflow: hidden; }
+.hy-bar b { display: block; height: 100%; width: 40%; border-radius: 4px; background: linear-gradient(90deg, transparent, var(--hy-mint), transparent); animation: hy-slide 1.2s var(--hy-ease-smooth) infinite; }
+@keyframes hy-spin  { to { transform: rotate(360deg); } }
+@keyframes hy-beat  { 0%,100% { transform: scale(.7); opacity: .7; } 50% { transform: scale(1.25); opacity: 1; } }
+@keyframes hy-slide { from { transform: translateX(-120%); } to { transform: translateX(380%); } }
+
+/* 2) Inline loader — added automatically beside any "Loading…/Fetching…" text.
+      (No display override, so the app's own show/hide logic keeps working.) */
+.hy-loading-line { color: var(--hy-text-dim) !important; }
+.hy-loading-line::before {
+  content: ""; display: inline-block; vertical-align: -4px; margin-right: 10px;
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2.5px solid rgba(183,255,114,.18); border-top-color: var(--hy-mint);
+  animation: hy-spin .8s linear infinite;
+  box-shadow: 0 0 10px rgba(183,255,114,.2);
+}
+
+/* 3) Existing full-screen overlay on the calendar page, restyled */
+#loadingOverlay {
+  background: rgba(16, 25, 19, .82) !important;
+  color: var(--hy-mint) !important;
+  backdrop-filter: blur(6px);
+  letter-spacing: 3px; text-transform: uppercase; font-weight: 700;
+  flex-direction: column; gap: 18px;
+}
+#loadingOverlay::before {
+  content: ""; width: 54px; height: 54px; border-radius: 50%;
+  border: 3px solid rgba(183,255,114,.15); border-top-color: var(--hy-mint);
+  animation: hy-spin .9s linear infinite; filter: drop-shadow(0 0 10px var(--hy-mint-glow));
+}
+
+/* 4) Button loading state (opt-in: add class .hy-busy; also auto-applied on
+      disabled submit buttons by hyva-motion.js) */
+button.hy-busy { color: transparent !important; text-shadow: none !important; pointer-events: none; }
+button.hy-busy::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px;
+  border-radius: 50%; border: 2.5px solid rgba(24,37,29,.25); border-top-color: var(--hy-graphite);
+  animation: hy-spin .7s linear infinite;
+}
+
+/* ---------- Mobile polish ---------- */
+@media (max-width: 500px) {
+  .card, .login-card { border-radius: 12px !important; }
+  button:hover:not(:disabled) { transform: none; }
+}
+
+/* ---------- Accessibility: honour reduced-motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  #hy-splash { display: none !important; }
+}

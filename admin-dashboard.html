@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIRE YOUR VA - Admin Dashboard</title>
+    <!-- Native Capacitor Plugins Bridge (For Background Notifications) -->
+    <script src="plugins.js"></script>
+    <!-- Push Engine JWT Signer -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.5.24/jsrsasign-all-min.js"></script>
+    
+    <!-- PWA & iPhone (iOS) Support Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2ecc71">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HireYourVA">
+    <link rel="apple-touch-icon" href="logo.png">
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #1a1a1a; 
+            color: #f5f5dc; 
+            margin: 0; 
+            padding: 0; 
+            font-size: 16px; 
+            padding-bottom: 70px; /* Space for bottom nav */
+        }
+        
+        .header { 
+            background-color: #242424; 
+            padding: 10px 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
+            position: relative; 
+        }
+
+        .header img { 
+            max-height: 40px; 
+            border-radius: 4px; 
+        }
+
+        .header-right { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+
+        #welcomeMsg { 
+            font-size: 14px; 
+            font-weight: 500; 
+            color: #f5f5dc; 
+            display: none; 
+        }
+
+        @media(min-width: 500px) {
+            #welcomeMsg {
+                display: inline; 
+            }
+        }
+
+        .logout-btn { 
+            background-color: #e74c3c; 
+            color: white; 
+            border: none; 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 13px; 
+            transition: 0.3s; 
+        }
+
+        .logout-btn:hover { 
+            background-color: #c0392b; 
+        }
+        
+        .notif-container { 
+            position: relative; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            width: 36px; 
+            height: 36px; 
+            background: #333; 
+            border-radius: 50%; 
+            border: 1px solid #444; 
+        }
+
+        .notif-bell { 
+            font-size: 16px; 
+            line-height: 1; 
+        }
+
+        .notif-badge { 
+            position: absolute; 
+            top: -3px; 
+            right: -3px; 
+            background: #e74c3c; 
+            color: white; 
+            font-size: 10px; 
+            padding: 2px 5px; 
+            border-radius: 50%; 
+            font-weight: bold; 
+            display: none; 
+        }
+
+        #toastBanner { 
+            visibility: hidden; 
+            min-width: 280px; 
+            background-color: #2ecc71; 
+            color: #111; 
+            text-align: left; 
+            border-radius: 8px; 
+            padding: 14px 18px; 
+            position: fixed; 
+            z-index: 9999; 
+            right: 20px; 
+            bottom: 20px; 
+            font-size: 14px; 
+            font-weight: bold; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4); 
+            border-left: 6px solid #111; 
+        }
+
+        #toastBanner.show { 
+            visibility: visible; 
+            animation: slidein 0.4s, fadeout 0.4s 3.5s; 
+        }
+
+        @keyframes slidein { 
+            from {bottom: 0; opacity: 0;} 
+            to {bottom: 20px; opacity: 1;} 
+        }
+
+        @keyframes fadeout { 
+            from {bottom: 20px; opacity: 1;} 
+            to {bottom: 0; opacity: 0;} 
+        }
+
+        .container { 
+            padding: 25px 20px; 
+            max-width: 1100px; 
+            margin: 20px auto; 
+        }
+
+        h2 { 
+            border-bottom: 2px solid #2ecc71; 
+            padding-bottom: 10px; 
+            display: inline-block; 
+            font-size: 26px; 
+        }
+        
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 20px; 
+            margin-top: 25px; 
+        }
+
+        .card { 
+            background-color: #242424; 
+            padding: 25px 20px; 
+            border-radius: 10px; 
+            text-align: center; 
+            border-top: 5px solid #2ecc71; 
+            cursor: pointer; 
+            transition: transform 0.3s, box-shadow 0.3s; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+        }
+
+        .card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 8px 20px rgba(46, 204, 113, 0.2); 
+        }
+
+        .card h3 { 
+            margin: 10px 0; 
+            color: #2ecc71; 
+            font-size: 20px; 
+        }
+
+        .card p { 
+            margin: 8px 0 0 0; 
+            color: #ccc; 
+            font-size: 14px; 
+            line-height: 1.4; 
+        }
+
+        /* Admin Broadcast Modal Dialog */
+        #adminBroadcastModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .broadcast-admin-box {
+            background: #242424;
+            padding: 25px;
+            border-radius: 10px;
+            max-width: 580px;
+            width: 100%;
+            border-top: 5px solid #e74c3c;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .broadcast-admin-box h3 {
+            margin-top: 0;
+            color: #e74c3c;
+            font-size: 20px;
+        }
+
+        .broadcast-admin-box input, .broadcast-admin-box textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            margin-bottom: 15px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .btn-push {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .btn-stop-push {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .btn-close-modal {
+            background: transparent;
+            color: #aaa;
+            border: none;
+            text-decoration: underline;
+            cursor: pointer;
+            width: 100%;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+
+        .history-list-box {
+            background: #1a1a1a;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            max-height: 220px;
+            overflow-y: auto;
+            text-align: left;
+            border: 1px solid #333;
+        }
+
+        .history-item {
+            font-size: 13px;
+            color: #f5f5dc;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+        }
+
+        .history-item strong {
+            color: #e74c3c;
+        }
+
+        .ack-subtext {
+            font-size: 11px;
+            color: #2ecc71;
+            margin-top: 4px;
+        }
+        
+        /* Bottom Navigation Bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #242424;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid #333;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            color: #aaa;
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .nav-item:hover {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .nav-item.active {
+            color: #2ecc71;
+            border-top: 3px solid #2ecc71;
+            margin-top: -3px;
+            font-weight: bold;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            display: block;
+            margin-bottom: 4px;
+        }
+    </style>
+    <!-- HYVA professional theme layer (additive; remove these 2 lines to roll back) -->
+    <link rel="stylesheet" href="hyva-theme.css">
+    <script src="hyva-motion.js"></script>
+</head>
+<body>
+
+    <div class="header">
+        <img src="logo.png" alt="Hire Your VA" onerror="this.style.display='none'">
+        <div class="header-right">
+            <div class="notif-container" id="notifContainer" title="Notifications" onclick="window.location.href='admin-notifications.html'">
+                <div class="notif-bell">🔔</div>
+                <span class="notif-badge" id="notifBadge">0</span>
+            </div>
+
+            <span id="welcomeMsg">Loading...</span>
+            <button class="logout-btn" id="logoutBtn">Logout</button>
+        </div>
+    </div>
+
+    <!-- Admin Broadcast Modal -->
+    <div id="adminBroadcastModal">
+        <div class="broadcast-admin-box">
+            <h3>📢 Broadcast & History</h3>
+            <p style="font-size: 13px; color: #aaa; margin: 0 0 10px 0;">Push live alerts and check past broadcasts with employee acknowledgements.</p>
+            
+            <label style="font-size: 13px; color: #ccc;">Announcement Title:</label>
+            <input type="text" id="bcTitleInput" placeholder="e.g., URGENT MEETING AT 4:00 PM">
+            
+            <label style="font-size: 13px; color: #ccc;">Message / Instructions:</label>
+            <textarea id="bcMsgInput" rows="3" placeholder="Type instructions here..."></textarea>
+            
+            <button class="btn-push" id="btnPushBroadcast">🚀 Push New Message to All</button>
+            <button class="btn-stop-push" id="btnStopBroadcast">🛑 Deactivate Current Active Alert</button>
+            
+            <h4 style="color: #2ecc71; font-size: 14px; margin: 15px 0 5px 0;">📜 Broadcast History & Acknowledgements:</h4>
+            <div class="history-list-box" id="historyListContainer">
+                <span style='color: #777; font-size: 12px;'>Loading history...</span>
+            </div>
+
+            <button class="btn-close-modal" id="btnCloseModal">Close Window</button>
+        </div>
+    </div>
+
+    <div id="toastBanner">New notification received!</div>
+
+    <div class="container">
+        <h2>Admin Panel</h2>
+        
+        <div class="grid">
+            <div class="card" onclick="window.location.href='admin-employees.html'">
+                <h3>👥 Manage Employees</h3>
+                <p>Add, edit or view employee details.</p>
+            </div>
+            <div class="card" onclick="window.location.href='admin-attendance.html'">
+                <h3>⏱️ Attendance & Tracker</h3>
+                <p>View daily login, logout & net time.</p>
+            </div>
+            <div class="card" onclick="window.location.href='admin-leaves.html'">
+                <h3>📅 Leave Approvals</h3>
+                <p>Approve or reject leave requests.</p>
+            </div>
+            <div class="card" onclick="window.location.href='admin-salary.html'">
+                <h3>💰 Auto Salary Sheet</h3>
+                <p>Calculate month-end salary based on attendance.</p>
+            </div>
+            <div class="card" onclick="window.location.href='admin-holidays.html'">
+                <h3>🏖️ Holiday Calendar</h3>
+                <p>Set company holidays and non-working days.</p>
+            </div>
+            <div class="card" style="border-top-color: #3498db;" onclick="window.location.href='admin-calendar.html'">
+                <h3 style="color: #3498db;">📆 Master Calendar</h3>
+                <p>View synchronized holidays, birthdays & approved leaves.</p>
+            </div>
+            <div class="card" style="border-top-color: #e74c3c;" onclick="openBroadcastModal()">
+                <h3 style="color: #e74c3c;">📢 Broadcast Announcement</h3>
+                <p>Send full-screen alerts and check employee acknowledgements.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Bottom Navigation Bar -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="window.location.href='admin-dashboard.html'">
+            <span class="nav-icon">🏠</span>
+            Home
+        </div>
+        <div class="nav-item" onclick="window.location.href='admin-employees.html'">
+            <span class="nav-icon">👥</span>
+            Employees
+        </div>
+        <div class="nav-item" onclick="window.location.href='admin-calendar.html'">
+            <span class="nav-icon">📆</span>
+            Calendar
+        </div>
+        <div class="nav-item" onclick="window.location.href='admin-leaves.html'">
+            <span class="nav-icon">📅</span>
+            Leaves
+        </div>
+        <div class="nav-item" onclick="window.location.href='admin-holidays.html'">
+            <span class="nav-icon">🏖️</span>
+            Holidays
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, setDoc, updateDoc, getDoc, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAw8NhVWaoMbm-CiED4M_K02wOSRtV2LUc",
+            authDomain: "hire-your-va-hr.firebaseapp.com",
+            projectId: "hire-your-va-hr",
+            storageBucket: "hire-your-va-hr.firebasestorage.app",
+            messagingSenderId: "75356368308",
+            appId: "1:75356368308:web:be5c4cfaa62c72efced6e1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // ENFORCE LOCAL PERSISTENCE FIX
+        setPersistence(auth, browserLocalPersistence).catch(console.error);
+
+        // VAPID KEY FOR WEB PUSH (PWA)
+        const vapidKey = "BEXZlEvQStFOLkqqisrhLlCNKJ4XzTGNl84k2caFe2lZ1w4I-rWYMEPHzTsn_LCqLTe-Mv5H04mKFSze0XV2GNM";
+
+        // =========================================================================
+        // SERVERLESS PUSH NOTIFICATION ENGINE (WAKES UP PHONES IN DOZE MODE)
+        // =========================================================================
+        
+        // JSON INJECTED
+        const serviceAccount = { "type": "service_account", "project_id": "hire-your-va-hr", "private_key_id": "cbcf5577bf3f61c46b40ebcb0bc485b0a5e8f2c9", "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCxxYCiiMcc2iKB\nytlBiNCN4exx+mJkZvyHqRBvwe7wIwhbrhpGipe+46bsAOdX0aSSpoQ6b8jBdU6m\nOHmohHxJotqwBKv5taa0QK1cOVQrlMzz3vFQw8QDy/T4SsKp/g4NY3fjzxHLz0RG\nOMzLbsT8U8GwPTtuZQlQ/lBZ55GUjEQ8ctEUkg//v7m8bq7XsDPBLurfNaGDPw53\nqszUVDMMPey6U0yVfhJdR5bPJiRiHhbmME+kikLmN0KiS/czMrkAdkFs4BpQJXGj\nansWsOdiZhk7Ex/M+SjKLtGVnxL9RFtGsrl73A1aIYEMIz7p+VXDJ09I6B3KVe7l\nT+qNuLLTAgMBAAECggEAPEcp3PLgAQp+FOCBVlVb0iA/Gk66Oi0ph55t8lch+88F\nMIESa8Tmu1VZ7kBIMWDmmstXnrD0s5RhPL99kQSLWDSeTnznC17qzcf4gIL35Wcp\nL6/yx136AwePYvmGlDmO7j9CEb7O2/rFvcHYv0oqBR0pWecJVd9wj0QMXs/Eb0en\nGpt7M1aPYar5ftciaRcAPWvHuB+eUI6bt2DTLgEqVV7SQhnZv3XWFhV7L/LbRPei\nukGsmz19/plxIJJyl7Qu2/ouHDELdY60yZwkAbIPQwboPR1HByc5shiVAmvLPSHb\nhulPh6SrFj+Us6xDLSFBABdRezohfco/2pIKY3iN4QKBgQDr/nZoyCSXCW7mkkTH\nAXGDPXy9FgncZykKOv7VSJAPxLlLp/9LILlPI6+lGAAEUiRn/fpyDasM2qoyDGTB\nTwUHWPrqWuFmwGkQLcdDIOsJXi4kdcHZbhLuD5IFw9XXsFeaWRbZffkRYK4j27Ur\nHmX1OSDgitvYpZiO3Lj0CDsV6QKBgQDA138MOGiOgI2RjFqZJuR4wJFs8LFOW7xL\ndFqPNdJ3BkE9pHKyb6KrFGldgRKwNEDVwQ94enBrYdfbRTK5FKVtdAtFfH8htbow\nGoyBXjyPOrrVRkd7LIfM/wQG1kUH3TCrK1jYiexC1eo3thkqDx/rx2Cpvfu4C8pI\nIaK5uVIBWwKBgQDfYjANQR45halfQacuxLQBKauwhHLzGQck8vETTKto8ar/7Vbf\nc2tVeQ8i9BPYAzUI5sUxPrTh5v3hgA/DV5wH93cTbNEdZRZORTbv2PICHQ8KXhkP\nSn1KsJxlLpl1oCtcI+ZYG0Eu7NgJg0f7N7wFIn13bplpel5tJItCG6RqOQKBgFs1\nUYThJSrJSKwfmzY2u/cU9XN2QBZUszFo/fAgP8RF9BOItSsKPAD4rYEpLEKk5El1\nf7C3EHbplyPBjeUWC8xCB5a89JBoGIDp/ayueqwv1fBLxkFO5Ygi0a++JnY6uusq\nnGIGkfVmodnpyesnrixhZ6nBDs6U3P7S0dlP+qZjAoGAc0jtTAJUmDNc/sag9+3Y\n/m3XWVNpoCCvNPtqPbir5nFzlQDVnvdph2wZGJnnuud3i+v5WcjbMaUG67ACx6SV\n8sfd0O1CB4C5JCb4TJxGo5Y5y8k63S+GDF3lR6u/ppwdp8I0TGWMmJRyXxNdCbVX\n3fqTXlVimKJkeONROSbT6rA=\n-----END PRIVATE KEY-----\n", "client_email": "firebase-adminsdk-fbsvc@hire-your-va-hr.iam.gserviceaccount.com", "client_id": "110949363085970768330", "auth_uri": "https://accounts.google.com/o/oauth2/auth", "token_uri": "https://oauth2.googleapis.com/token", "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs", "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40hire-your-va-hr.iam.gserviceaccount.com", "universe_domain": "googleapis.com" };
+
+        async function sendFCMPush(fcmToken, title, message) {
+            if (!serviceAccount.project_id) {
+                console.warn("Service Account JSON not pasted. Skipped waking up phone.");
+                return;
+            }
+
+            try {
+                const header = { alg: "RS256", typ: "JWT" };
+                const now = Math.floor(Date.now() / 1000);
+                const claim = {
+                    iss: serviceAccount.client_email,
+                    scope: "https://www.googleapis.com/auth/firebase.messaging",
+                    aud: "https://oauth2.googleapis.com/token",
+                    exp: now + 3600,
+                    iat: now
+                };
+                
+                const jwt = KJUR.jws.JWS.sign("RS256", JSON.stringify(header), JSON.stringify(claim), serviceAccount.private_key);
+                
+                const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`
+                });
+                
+                const tokenData = await tokenResponse.json();
+                const accessToken = tokenData.access_token;
+
+                await fetch(`https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${accessToken}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: {
+                            token: fcmToken,
+                            notification: {
+                                title: title,
+                                body: message
+                            },
+                            android: {
+                                notification: {
+                                    channel_id: "shift_alarms_v3",
+                                    sound: "notification"
+                                }
+                            }
+                        }
+                    })
+                });
+            } catch(e) {
+                console.error("FCM Push Error:", e);
+            }
+        }
+
+        // =========================================================================
+        // NATIVE ANDROID NOTIFICATION SETUP & ADMIN FCM REGISTRATION
+        // =========================================================================
+        async function setupNotificationChannel() {
+            if (window.LocalNotifications) {
+                try {
+                    await window.LocalNotifications.createChannel({
+                        id: 'admin_alerts',
+                        name: 'Admin Alerts',
+                        description: 'Important notifications for the admin panel',
+                        importance: 5,
+                        visibility: 1,
+                        sound: 'notification.mp3',
+                        vibration: true
+                    });
+                } catch(e) {
+                    console.log("Channel creation error", e);
+                }
+            } else if (window.Notification && Notification.permission !== "granted") {
+                Notification.requestPermission();
+            }
+        }
+        setupNotificationChannel();
+
+        async function initAdminPushNotifications() {
+            if (window.PushNotifications) {
+                try {
+                    await window.PushNotifications.requestPermissions();
+                    await window.PushNotifications.register();
+
+                    window.PushNotifications.addListener('registration', async (token) => {
+                        console.log('Admin FCM Token received: ', token.value);
+                        // Save Admin token globally so employees can push leaves to it
+                        await setDoc(doc(db, "settings", "admin_data"), {
+                            fcmToken: token.value,
+                            updatedAt: Date.now()
+                        }, { merge: true });
+                    });
+
+                    window.PushNotifications.addListener('pushNotificationReceived', (notification) => {
+                        showToast(notification.body || "New alert received!");
+                        playNotificationSound();
+                    });
+                    return; // Exit if Native succeeds
+                } catch(e) {
+                    console.log('Native Push unavailable, switching to Web Push...', e);
+                }
+            }
+
+            // Fallback: PWA WEB PUSH (Laptop/iPhone)
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    const messaging = getMessaging(app);
+                    const currentToken = await getToken(messaging, { vapidKey: vapidKey });
+                    if (currentToken) {
+                        console.log('Admin Web FCM Token received: ', currentToken);
+                        await setDoc(doc(db, "settings", "admin_data"), { 
+                            fcmToken: currentToken, 
+                            updatedAt: Date.now() 
+                        }, { merge: true });
+                    }
+                    onMessage(messaging, (payload) => {
+                        showToast(payload.notification.body || "New alert received!");
+                        playNotificationSound();
+                    });
+                }
+            } catch (err) {
+                console.log("Web Push Error:", err);
+            }
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed: ', err));
+            });
+        }
+
+        async function triggerNativeNotification(msg) {
+            playNotificationSound();
+            if (window.LocalNotifications) {
+                try {
+                    await window.LocalNotifications.schedule({
+                        notifications: [
+                            {
+                                title: "Admin Alert",
+                                body: msg,
+                                id: Math.floor(Math.random() * 100000),
+                                schedule: { at: new Date(Date.now() + 100) },
+                                sound: 'notification.mp3',
+                                channelId: 'admin_alerts'
+                            }
+                        ]
+                    });
+                } catch(e) {}
+            } else if (window.Notification && Notification.permission === "granted") {
+                new Notification("Admin Alert", { body: msg, icon: "logo.png" });
+            }
+        }
+
+        function playNotificationSound() {
+            try {
+                const audio = new Audio('notification.mp3');
+                audio.play().catch(() => fallbackBeep());
+            } catch(e) {
+                fallbackBeep();
+            }
+        }
+
+        function fallbackBeep() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } catch(e) {}
+        }
+
+        function showToast(text) {
+            const toast = document.getElementById('toastBanner');
+            toast.innerText = text;
+            toast.className = "show";
+            triggerNativeNotification(text);
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3500);
+        }
+
+        const modal = document.getElementById('adminBroadcastModal');
+        document.getElementById('btnCloseModal').addEventListener('click', () => { 
+            modal.style.display = 'none'; 
+        });
+
+        window.openBroadcastModal = async function() {
+            modal.style.display = 'flex';
+            loadBroadcastHistory();
+            try {
+                const docSnap = await getDoc(doc(db, "broadcasts", "latest_broadcast"));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('bcTitleInput').value = data.title || "";
+                    document.getElementById('bcMsgInput').value = data.message || "";
+                }
+            } catch(e) {}
+        }
+
+        async function loadBroadcastHistory() {
+            const container = document.getElementById('historyListContainer');
+            try {
+                const q = query(collection(db, "broadcast_history"), orderBy("timestamp", "desc"));
+                const snap = await getDocs(q);
+                
+                if (snap.empty) {
+                    container.innerHTML = "<span style='color: #777; font-size: 12px;'>No broadcast history found.</span>";
+                    return;
+                }
+
+                let html = "";
+                snap.forEach(docSnap => {
+                    const item = docSnap.data();
+                    const dateStr = new Date(item.timestamp).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+                    const acks = item.acknowledgements || [];
+                    
+                    let acksHtml = acks.length > 0 
+                        ? acks.map(a => `✅ ${a.name} (${new Date(a.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})})`).join(', ')
+                        : "<span style='color: #888;'>No acknowledgements yet</span>";
+
+                    html += `
+                        <div class="history-item">
+                            <strong>${item.title || "ANNOUNCEMENT"}</strong> <span style="font-size: 11px; color: #888;">(${dateStr})</span><br>
+                            <span>${item.message}</span>
+                            <div class="ack-subtext"><strong>Seen by:</strong> ${acksHtml}</div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            } catch(e) {
+                container.innerHTML = "<span style='color: red; font-size: 12px;'>Failed to load history.</span>";
+            }
+        }
+
+        document.getElementById('btnPushBroadcast').addEventListener('click', async () => {
+            const title = document.getElementById('bcTitleInput').value.trim() || "COMPANY ANNOUNCEMENT";
+            const message = document.getElementById('bcMsgInput').value.trim();
+            if (!message) {
+                alert("Please enter a message!");
+                return;
+            }
+
+            const btn = document.getElementById('btnPushBroadcast');
+            btn.innerText = "Sending Push to All Employees...";
+            btn.disabled = true;
+
+            try {
+                const broadcastData = {
+                    title: title,
+                    message: message,
+                    timestamp: Date.now(),
+                    active: true,
+                    acknowledgements: []
+                };
+
+                // 1. Update latest active broadcast for live popup on employees side
+                await setDoc(doc(db, "broadcasts", "latest_broadcast"), broadcastData);
+
+                // 2. Save directly into history
+                await setDoc(doc(db, "broadcast_history", String(broadcastData.timestamp)), broadcastData);
+
+                // 3. FIRE REAL NATIVE PUSH NOTIFICATION TO WAKE UP DOZE MODE
+                const empQuery = query(collection(db, "employees"));
+                const empSnap = await getDocs(empQuery);
+                empSnap.forEach(docSnap => {
+                    const empData = docSnap.data();
+                    if(empData.fcmToken) {
+                        sendFCMPush(empData.fcmToken, title, message);
+                    }
+                });
+
+                alert("🚀 Announcement pushed live & saved to history!");
+                modal.style.display = 'none';
+            } catch (err) {
+                alert("Error: " + err.message);
+            }
+            btn.innerText = "🚀 Push New Message to All";
+            btn.disabled = false;
+        });
+
+        document.getElementById('btnStopBroadcast').addEventListener('click', async () => {
+            try {
+                await updateDoc(doc(db, "broadcasts", "latest_broadcast"), { active: false });
+                alert("🛑 Announcement deactivated!");
+                modal.style.display = 'none';
+            } catch(err) {
+                alert("Error: " + err.message);
+            }
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.getElementById('welcomeMsg').innerText = "Welcome, Admin";
+                initRealtimeNotifications();
+                
+                // Fetch and save Admin's push token on login
+                initAdminPushNotifications();
+            } else {
+                window.location.href = "index.html";
+            }
+        });
+
+        function initRealtimeNotifications() {
+            let initialLoad = true;
+            const q = query(collection(db, "leaves"), where("status", "==", "PENDING"));
+            
+            onSnapshot(q, (snapshot) => {
+                const badge = document.getElementById('notifBadge');
+                const size = snapshot.size;
+
+                if(size > 0) {
+                    badge.innerText = size;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+
+                if (!initialLoad && snapshot.docChanges().some(change => change.type === "added")) {
+                    showToast("🔔 New leave request received!");
+                }
+                initialLoad = false;
+            }, (error) => {
+                console.error(error);
+            });
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            signOut(auth).then(() => window.location.href = "index.html");
+        });
+    </script>
+</body>
+</html>

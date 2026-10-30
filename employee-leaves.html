@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIRE YOUR VA - Employee Leaves</title>
+    <!-- PWA & iPhone (iOS) Support Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3498db">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HireYourVA">
+    <link rel="apple-touch-icon" href="logo.png">
+    
+    <!-- Push Engine JWT Signer -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.5.24/jsrsasign-all-min.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1a; color: #f5f5dc; margin: 0; padding: 0; font-size: 15px; }
+        .header { background-color: #242424; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .header img { max-height: 40px; border-radius: 4px; }
+        .btn-back { background-color: #555; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; text-decoration: none; font-weight: bold; font-size: 13px; }
+        .btn-back:hover { background-color: #777; }
+        
+        .container { padding: 15px; max-width: 600px; margin: 15px auto; }
+        .card { background: #242424; padding: 20px; border-radius: 10px; border-top: 4px solid #3498db; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        h2 { margin-top: 0; color: #3498db; font-size: 20px; border-bottom: 2px solid #333; padding-bottom: 8px; }
+        
+        .input-group { display: flex; flex-direction: column; text-align: left; margin-bottom: 12px; }
+        .date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        @media (max-width: 500px) { .date-grid { grid-template-columns: 1fr; } }
+
+        label { font-size: 13px; color: #aaa; margin-bottom: 4px; font-weight: 500; }
+        input, select, textarea { padding: 10px; border: 1px solid #444; border-radius: 6px; background-color: #333; color: white; font-size: 14px; width: 100%; box-sizing: border-box; }
+        
+        button.submit-btn { width: 100%; padding: 12px; background-color: #3498db; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        button.submit-btn:hover { background-color: #2980b9; }
+        #statusMsg { text-align: center; margin-top: 10px; font-weight: bold; font-size: 13px; }
+
+        .leave-item { background: #1a1a1a; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #f39c12; }
+        .leave-item.approved { border-left-color: #2ecc71; }
+        .leave-item.rejected { border-left-color: #e74c3c; }
+        .leave-item p { margin: 4px 0; font-size: 13px; color: #ccc; }
+    </style>
+    <!-- HYVA professional theme layer (additive; remove these 2 lines to roll back) -->
+    <link rel="stylesheet" href="hyva-theme.css">
+    <script src="hyva-motion.js"></script>
+</head>
+<body>
+
+    <div class="header">
+        <img src="logo.png" alt="Hire Your VA" onerror="this.style.display='none'">
+        <a href="employee-dashboard.html" class="btn-back">Back</a>
+    </div>
+
+    <div class="container">
+        <!-- Apply Leave Card -->
+        <div class="card">
+            <h2>Apply for Leave</h2>
+            <form id="leaveForm">
+                <div class="input-group">
+                    <label>Leave Type</label>
+                    <select id="leaveType" required>
+                        <option value="Casual Leave (CL)">Casual Leave (CL)</option>
+                        <option value="Sick Leave (SL)">Sick Leave (SL)</option>
+                        <option value="Paid Leave (PL)">Paid Leave (PL)</option>
+                    </select>
+                </div>
+                
+                <div class="date-grid">
+                    <div class="input-group">
+                        <label>From Date</label>
+                        <input type="date" id="fromDate" required>
+                    </div>
+                    <div class="input-group">
+                        <label>To Date</label>
+                        <input type="date" id="toDate" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Reason for Leave</label>
+                    <textarea id="reason" rows="2" required placeholder="Enter reason..."></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">Submit Application</button>
+                <div id="statusMsg"></div>
+            </form>
+        </div>
+
+        <!-- Leave History -->
+        <div class="card" style="border-top-color: #2ecc71;">
+            <h2 style="color: #2ecc71;">My Leave History</h2>
+            <div id="leaveHistoryList"><p style="color: #aaa; text-align: center;">Loading history...</p></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAw8NhVWaoMbm-CiED4M_K02wOSRtV2LUc",
+            authDomain: "hire-your-va-hr.firebaseapp.com",
+            projectId: "hire-your-va-hr",
+            storageBucket: "hire-your-va-hr.firebasestorage.app",
+            messagingSenderId: "75356368308",
+            appId: "1:75356368308:web:be5c4cfaa62c72efced6e1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let currentUser = null;
+
+        // =========================================================================
+        // SERVERLESS PUSH NOTIFICATION ENGINE (TO WAKE UP ADMIN'S PHONE)
+        // =========================================================================
+        
+        // JSON KEY INJECTED BELOW
+        const serviceAccount = { "type": "service_account", "project_id": "hire-your-va-hr", "private_key_id": "cbcf5577bf3f61c46b40ebcb0bc485b0a5e8f2c9", "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCxxYCiiMcc2iKB\nytlBiNCN4exx+mJkZvyHqRBvwe7wIwhbrhpGipe+46bsAOdX0aSSpoQ6b8jBdU6m\nOHmohHxJotqwBKv5taa0QK1cOVQrlMzz3vFQw8QDy/T4SsKp/g4NY3fjzxHLz0RG\nOMzLbsT8U8GwPTtuZQlQ/lBZ55GUjEQ8ctEUkg//v7m8bq7XsDPBLurfNaGDPw53\nqszUVDMMPey6U0yVfhJdR5bPJiRiHhbmME+kikLmN0KiS/czMrkAdkFs4BpQJXGj\nansWsOdiZhk7Ex/M+SjKLtGVnxL9RFtGsrl73A1aIYEMIz7p+VXDJ09I6B3KVe7l\nT+qNuLLTAgMBAAECggEAPEcp3PLgAQp+FOCBVlVb0iA/Gk66Oi0ph55t8lch+88F\nMIESa8Tmu1VZ7kBIMWDmmstXnrD0s5RhPL99kQSLWDSeTnznC17qzcf4gIL35Wcp\nL6/yx136AwePYvmGlDmO7j9CEb7O2/rFvcHYv0oqBR0pWecJVd9wj0QMXs/Eb0en\nGpt7M1aPYar5ftciaRcAPWvHuB+eUI6bt2DTLgEqVV7SQhnZv3XWFhV7L/LbRPei\nukGsmz19/plxIJJyl7Qu2/ouHDELdY60yZwkAbIPQwboPR1HByc5shiVAmvLPSHb\nhulPh6SrFj+Us6xDLSFBABdRezohfco/2pIKY3iN4QKBgQDr/nZoyCSXCW7mkkTH\nAXGDPXy9FgncZykKOv7VSJAPxLlLp/9LILlPI6+lGAAEUiRn/fpyDasM2qoyDGTB\nTwUHWPrqWuFmwGkQLcdDIOsJXi4kdcHZbhLuD5IFw9XXsFeaWRbZffkRYK4j27Ur\nHmX1OSDgitvYpZiO3Lj0CDsV6QKBgQDA138MOGiOgI2RjFqZJuR4wJFs8LFOW7xL\ndFqPNdJ3BkE9pHKyb6KrFGldgRKwNEDVwQ94enBrYdfbRTK5FKVtdAtFfH8htbow\nGoyBXjyPOrrVRkd7LIfM/wQG1kUH3TCrK1jYiexC1eo3thkqDx/rx2Cpvfu4C8pI\nIaK5uVIBWwKBgQDfYjANQR45halfQacuxLQBKauwhHLzGQck8vETTKto8ar/7Vbf\nc2tVeQ8i9BPYAzUI5sUxPrTh5v3hgA/DV5wH93cTbNEdZRZORTbv2PICHQ8KXhkP\nSn1KsJxlLpl1oCtcI+ZYG0Eu7NgJg0f7N7wFIn13bplpel5tJItCG6RqOQKBgFs1\nUYThJSrJSKwfmzY2u/cU9XN2QBZUszFo/fAgP8RF9BOItSsKPAD4rYEpLEKk5El1\nf7C3EHbplyPBjeUWC8xCB5a89JBoGIDp/ayueqwv1fBLxkFO5Ygi0a++JnY6uusq\nnGIGkfVmodnpyesnrixhZ6nBDs6U3P7S0dlP+qZjAoGAc0jtTAJUmDNc/sag9+3Y\n/m3XWVNpoCCvNPtqPbir5nFzlQDVnvdph2wZGJnnuud3i+v5WcjbMaUG67ACx6SV\n8sfd0O1CB4C5JCb4TJxGo5Y5y8k63S+GDF3lR6u/ppwdp8I0TGWMmJRyXxNdCbVX\n3fqTXlVimKJkeONROSbT6rA=\n-----END PRIVATE KEY-----\n", "client_email": "firebase-adminsdk-fbsvc@hire-your-va-hr.iam.gserviceaccount.com", "client_id": "110949363085970768330", "auth_uri": "https://accounts.google.com/o/oauth2/auth", "token_uri": "https://oauth2.googleapis.com/token", "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs", "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40hire-your-va-hr.iam.gserviceaccount.com", "universe_domain": "googleapis.com" };
+
+        async function sendFCMPushToAdmin(title, message) {
+            if (!serviceAccount.project_id) {
+                console.warn("Service Account JSON not pasted. Skipped waking up Admin phone.");
+                return;
+            }
+
+            try {
+                // Fetch Admin's FCM Token from Firestore
+                const adminDoc = await getDoc(doc(db, "settings", "admin_data"));
+                if (!adminDoc.exists() || !adminDoc.data().fcmToken) {
+                    console.log("Admin FCM token not found in database.");
+                    return;
+                }
+                const adminToken = adminDoc.data().fcmToken;
+
+                const header = { alg: "RS256", typ: "JWT" };
+                const now = Math.floor(Date.now() / 1000);
+                const claim = {
+                    iss: serviceAccount.client_email,
+                    scope: "https://www.googleapis.com/auth/firebase.messaging",
+                    aud: "https://oauth2.googleapis.com/token",
+                    exp: now + 3600,
+                    iat: now
+                };
+                
+                const jwt = KJUR.jws.JWS.sign("RS256", JSON.stringify(header), JSON.stringify(claim), serviceAccount.private_key);
+                
+                const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`
+                });
+                
+                const tokenData = await tokenResponse.json();
+                const accessToken = tokenData.access_token;
+
+                await fetch(`https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${accessToken}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: {
+                            token: adminToken,
+                            notification: {
+                                title: title,
+                                body: message
+                            },
+                            android: {
+                                notification: {
+                                    channel_id: "admin_alerts",
+                                    sound: "notification"
+                                }
+                            }
+                        }
+                    })
+                });
+            } catch(e) {
+                console.error("FCM Push Error:", e);
+            }
+        }
+        // =========================================================================
+
+        // Service Worker Registration for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log("Service Worker Registered Successfully"))
+                .catch((err) => console.log("Service Worker Registration Failed", err));
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) window.location.href = "index.html";
+            else {
+                currentUser = user;
+                fetchLeaves(user.uid);
+            }
+        });
+
+        document.getElementById('leaveForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const statusMsg = document.getElementById('statusMsg');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            submitBtn.disabled = true;
+            statusMsg.innerText = "Submitting...";
+            statusMsg.style.color = "#f39c12";
+
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            const leaveType = document.getElementById('leaveType').value;
+
+            // Calculate total days
+            const d1 = new Date(fromDate);
+            const d2 = new Date(toDate);
+            const diffTime = Math.abs(d2 - d1);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+            if (d2 < d1) {
+                alert("To Date cannot be earlier than From Date!");
+                submitBtn.disabled = false;
+                statusMsg.innerText = "";
+                return;
+            }
+
+            const leaveData = {
+                uid: currentUser.uid,
+                leaveType: leaveType,
+                fromDate: fromDate,
+                toDate: toDate,
+                totalDays: diffDays,
+                reason: document.getElementById('reason').value,
+                status: "PENDING",
+                appliedAt: Date.now()
+            };
+
+            try {
+                await addDoc(collection(db, "leaves"), leaveData);
+                statusMsg.innerText = "Leave Application Submitted!";
+                statusMsg.style.color = "#2ecc71";
+                document.getElementById('leaveForm').reset();
+                fetchLeaves(currentUser.uid);
+
+                // FIRE NATIVE FCM PUSH TO ADMIN
+                // Ensure employee data is loaded correctly (fallback to Generic if not fully loaded)
+                let empName = "An Employee";
+                try {
+                    let d = JSON.parse(localStorage.getItem('currentUserData'));
+                    if (d && d.name) empName = d.name;
+                    else if (window.currentUserData && window.currentUserData.name) empName = window.currentUserData.name;
+                } catch(e) {}
+                
+                await sendFCMPushToAdmin("Leave Request Pending", `${empName} applied for ${diffDays} days of ${leaveType}.`);
+
+            } catch (error) {
+                statusMsg.innerText = "Error: " + error.message;
+                statusMsg.style.color = "#e74c3c";
+            } finally {
+                submitBtn.disabled = false;
+                setTimeout(() => statusMsg.innerText = "", 3000);
+            }
+        });
+
+        async function fetchLeaves(uid) {
+            const listDiv = document.getElementById('leaveHistoryList');
+            try {
+                const q = query(collection(db, "leaves"), where("uid", "==", uid));
+                const snap = await getDocs(q);
+                
+                let leaves = [];
+                snap.forEach(doc => leaves.push({ id: doc.id, ...doc.data() }));
+                leaves.sort((a, b) => b.appliedAt - a.appliedAt);
+
+                if (leaves.length === 0) {
+                    listDiv.innerHTML = "<p style='color: #aaa; text-align: center;'>No leave applications found.</p>";
+                    return;
+                }
+
+                listDiv.innerHTML = "";
+                leaves.forEach(l => {
+                    const statusClass = l.status === 'APPROVED' ? 'approved' : (l.status === 'REJECTED' ? 'rejected' : '');
+                    const badgeColor = l.status === 'APPROVED' ? '#2ecc71' : (l.status === 'REJECTED' ? '#e74c3c' : '#f39c12');
+                    
+                    const div = document.createElement('div');
+                    div.className = `leave-item ${statusClass}`;
+                    div.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>${l.leaveType}</strong>
+                            <span style="font-size: 11px; font-weight: bold; color: ${badgeColor};">${l.status}</span>
+                        </div>
+                        <p><strong>Duration:</strong> ${l.fromDate} to ${l.toDate} (${l.totalDays} Days)</p>
+                        <p><strong>Reason:</strong> ${l.reason}</p>
+                    `;
+                    listDiv.appendChild(div);
+                });
+            } catch (error) {
+                listDiv.innerHTML = "<p style='color: red;'>Failed to load history.</p>";
+            }
+        }
+    </script>
+</body>
+</html>

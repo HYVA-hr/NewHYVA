@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIRE YOUR VA - Salary Sheet</title>
+    <!-- PWA & iPhone (iOS) Support Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2ecc71">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HireYourVA">
+    <link rel="apple-touch-icon" href="logo.png">
+
+    <!-- SheetJS Library for 3-in-1 Multi-Tab Excel Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1a; color: #f5f5dc; margin: 0; padding: 0; padding-bottom: 50px; }
+        .header { background-color: #242424; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .header img { max-height: 40px; border-radius: 4px; }
+        .btn-back { background-color: #555; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; text-decoration: none; font-weight: bold; }
+        .btn-back:hover { background-color: #777; }
+        
+        .container { padding: 20px; max-width: 960px; margin: 20px auto; }
+        
+        /* Controls & Advance Box */
+        .controls { background: #242424; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; border-left: 5px solid #3498db; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .controls label { font-weight: bold; color: #aaa; font-size: 13px; display: block; margin-bottom: 6px; }
+        .controls input, .controls select { padding: 10px; border-radius: 4px; border: 1px solid #444; background: #333; color: white; font-family: inherit; font-size: 14px; box-sizing: border-box; }
+        .controls button { background: #3498db; color: white; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .controls button:hover { opacity: 0.9; }
+
+        .btn-excel { background: #27ae60 !important; color: white !important; }
+        .btn-lock { background: #8e44ad !important; color: white !important; }
+        .btn-adv-submit { background: #f39c12 !important; color: #111 !important; }
+
+        /* Live Summary Banner */
+        .summary-banner { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .summary-box { background: #242424; padding: 14px 16px; border-radius: 8px; border-top: 3px solid #2ecc71; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .summary-box span { font-size: 12px; color: #aaa; display: block; }
+        .summary-box strong { font-size: 20px; color: #fff; margin-top: 4px; display: block; }
+
+        /* Employee Salary Cards Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; }
+        
+        .salary-card { background: #242424; padding: 20px; border-radius: 8px; border-top: 4px solid #f39c12; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+        .salary-card h3 { margin: 0 0 5px 0; color: #f39c12; display: flex; justify-content: space-between; align-items: center; }
+        .salary-card hr { border: 0; border-top: 1px solid #333; margin: 15px 0; }
+        
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        .stat-row span { color: #aaa; }
+        .stat-row strong { color: #fff; }
+        
+        .input-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #1a1a1a; padding: 8px 12px; border-radius: 4px; font-size: 13px; }
+        .input-row input { width: 80px; padding: 6px; border-radius: 4px; border: 1px solid #444; background: #333; color: white; text-align: center; font-weight: bold; }
+        
+        .final-salary { font-size: 26px; font-weight: bold; color: #2ecc71; text-align: center; margin-top: 15px; background: #111; padding: 10px; border-radius: 6px; border: 1px solid #2ecc71; }
+        
+        .btn-wa { width: 100%; background: #25D366; color: white; font-weight: bold; padding: 10px; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; font-size: 14px; }
+        .btn-wa:hover { background: #128C7E; }
+
+        .btn-mini { background: #333; color: #f39c12; border: 1px solid #555; border-radius: 4px; padding: 2px 7px; font-size: 11px; cursor: pointer; margin-left: 6px; font-weight: bold; }
+        .btn-mini:hover { background: #444; color: #fff; }
+
+        /* Salary History Section */
+        .history-section { margin-top: 35px; background: #242424; padding: 20px; border-radius: 8px; border-top: 4px solid #8e44ad; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+        .history-item { background: #1a1a1a; border: 1px solid #333; border-left: 4px solid #8e44ad; border-radius: 6px; margin-bottom: 12px; overflow: hidden; }
+        .history-header { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; flex-wrap: wrap; gap: 10px; }
+        .history-header:hover { background: #222; }
+        .history-body { display: none; padding: 15px; border-top: 1px solid #333; background: #121212; overflow-x: auto; }
+        
+        .sub-table { width: 100%; border-collapse: collapse; min-width: 650px; font-size: 13px; }
+        .sub-table th, .sub-table td { padding: 9px 10px; text-align: left; border-bottom: 1px solid #2a2a2a; }
+        .sub-table th { color: #2ecc71; background: #1f1f1f; }
+
+        /* Modals */
+        .modal-overlay { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; }
+        .modal-box { background: #242424; padding: 20px; border-radius: 10px; border-top: 4px solid #f39c12; width: 100%; max-width: 450px; max-height: 85vh; overflow-y: auto; }
+
+        #waToast { visibility: hidden; min-width: 250px; background-color: #25D366; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 99999; right: 30px; bottom: 30px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        #waToast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    </style>
+    <!-- HYVA professional theme layer (additive; remove these 2 lines to roll back) -->
+    <link rel="stylesheet" href="hyva-theme.css">
+    <script src="hyva-motion.js"></script>
+</head>
+<body>
+
+    <div class="header">
+        <img src="logo.png" alt="Hire Your VA" onerror="this.style.display='none'">
+        <a href="admin-dashboard.html" class="btn-back">Back to Dashboard</a>
+    </div>
+
+    <!-- ADVANCE DETAILS / DELETE MODAL -->
+    <div id="advanceModal" class="modal-overlay">
+        <div class="modal-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #444; padding-bottom:10px; margin-bottom:15px;">
+                <h3 style="margin:0; color:#f39c12;" id="advModalTitle">Advance Details</h3>
+                <button onclick="document.getElementById('advanceModal').style.display='none'" style="background:none; border:none; color:#aaa; font-size:24px; cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            <div id="advModalContent"></div>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- 1. GIVE SALARY ADVANCE (MID-MONTH) -->
+        <div class="controls" style="border-left-color: #f39c12;">
+            <div style="width: 100%; margin-bottom: -5px;">
+                <strong style="color: #f39c12; font-size: 16px;">💸 Give Mid-Month Salary Advance</strong>
+                <span style="font-size: 12px; color: #aaa; margin-left: 10px;">(Auto-deducts from employee's Net Pay for that month)</span>
+            </div>
+            <div style="flex: 1; min-width: 180px;">
+                <label>Select Employee:</label>
+                <select id="advEmpSelect" style="width: 100%;">
+                    <option value="">-- Select Employee --</option>
+                </select>
+            </div>
+            <div style=" width: 130px;">
+                <label>Amount (₹):</label>
+                <input type="number" id="advAmount" placeholder="e.g. 2000" min="1" style="width: 100%;">
+            </div>
+            <div style="width: 150px;">
+                <label>Date Given:</label>
+                <input type="date" id="advDate" style="width: 100%;">
+            </div>
+            <div style="flex: 1; min-width: 160px;">
+                <label>Reason / Note:</label>
+                <input type="text" id="advNote" placeholder="e.g. Personal / Medical" style="width: 100%;">
+            </div>
+            <div>
+                <button id="addAdvanceBtn" class="btn-adv-submit">➕ Add Advance</button>
+            </div>
+        </div>
+
+        <!-- 2. MONTH CONTROLS & EXPORT / LOCK BUTTONS -->
+        <div class="controls">
+            <div>
+                <label>Billing Month (1st - 30th):</label>
+                <input type="month" id="monthFilter">
+            </div>
+            <div>
+                <button id="generateBtn">🔄 Calculate Payroll</button>
+            </div>
+            <div style="margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="downloadExcelBtn" class="btn-excel">📥 Download 3-in-1 Excel</button>
+                <button id="lockHistoryBtn" class="btn-lock">🔒 Lock & Save to History (15th Payout)</button>
+            </div>
+        </div>
+
+        <!-- 3. LIVE MONTH TOTALS BANNER -->
+        <div class="summary-banner">
+            <div class="summary-box" style="border-top-color: #3498db;">
+                <span>Billing Cycle & Status</span>
+                <strong id="cycleStatusText" style="font-size: 15px; color: #3498db;">⏳ Open (Payout on 15th)</strong>
+            </div>
+            <div class="summary-box" style="border-top-color: #f39c12;">
+                <span>Total Advances (This Month)</span>
+                <strong id="totalMonthAdv" style="color: #f39c12;">₹0</strong>
+            </div>
+            <div class="summary-box" style="border-top-color: #2ecc71;">
+                <span>Total Net Payout (All Staff)</span>
+                <strong id="totalMonthNet" style="color: #2ecc71;">₹0</strong>
+            </div>
+        </div>
+
+        <div id="loadingMsg" style="text-align: center; color: #aaa; display: none; margin: 20px 0;">Fetching attendance, leaves, holidays & advances...</div>
+        
+        <!-- 4. EMPLOYEE SALARY CARDS GRID -->
+        <div class="grid" id="salaryGrid"></div>
+
+        <!-- 5. PAID SALARY HISTORY ARCHIVE -->
+        <div class="history-section">
+            <h3 style="margin-top: 0; color: #9b59b6; border-bottom: 1px solid #333; padding-bottom: 10px;">
+                📜 Paid Salary History Archive (Click any month to view employee sub-data)
+            </h3>
+            <div id="historyContainer">
+                <p style="color: #aaa; text-align: center;">Loading salary history...</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="waToast">📲 Opening WhatsApp...</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, addDoc, setDoc, getDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAw8NhVWaoMbm-CiED4M_K02wOSRtV2LUc",
+            authDomain: "hire-your-va-hr.firebaseapp.com",
+            projectId: "hire-your-va-hr",
+            storageBucket: "hire-your-va-hr.firebasestorage.app",
+            messagingSenderId: "75356368308",
+            appId: "1:75356368308:web:be5c4cfaa62c72efced6e1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        let allEmployees = [];
+        window.salaryDataCache = {}; // Global cache to hold live salary data per employee
+        
+        // Raw arrays for 3-in-1 Excel Export
+        let rawAttendanceList = [];
+        let rawLeavesList = [];
+        let rawAdvancesList = [];
+        let rawHolidaysList = [];
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = "index.html";
+            } else {
+                const today = new Date();
+                const todayDateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+                document.getElementById('advDate').value = todayDateStr;
+
+                // Smart 15th Payout Cycle Rule:
+                // Company counts salary 1st-30th and distributes on 15th of next month.
+                // So from 1st to 15th, default to previous month for easy payout review!
+                let targetYear = today.getFullYear();
+                let targetMonth = today.getMonth() + 1;
+                if (today.getDate() <= 15) {
+                    targetMonth -= 1;
+                    if (targetMonth === 0) {
+                        targetMonth = 12;
+                        targetYear -= 1;
+                    }
+                }
+                const defaultMonthStr = `${targetYear}-${String(targetMonth).padStart(2,'0')}`;
+                document.getElementById('monthFilter').value = defaultMonthStr;
+
+                await fetchAllEmployees();
+                await generateSalaryData(defaultMonthStr);
+                await loadSalaryHistory();
+            }
+        });
+
+        async function fetchAllEmployees() {
+            try {
+                const q = query(collection(db, "employees"), where("role", "==", "EMPLOYEE"));
+                const snap = await getDocs(q);
+                allEmployees = [];
+                snap.forEach(docSnap => {
+                    allEmployees.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                // Sort by Employee ID (HYVA-001, HYVA-002...)
+                allEmployees.sort((a, b) => {
+                    let idA = a.employeeId || "";
+                    let idB = b.employeeId || "";
+                    return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' });
+                });
+
+                // Populate Advance Dropdown
+                const advSelect = document.getElementById('advEmpSelect');
+                advSelect.innerHTML = `<option value="">-- Select Employee --</option>`;
+                allEmployees.forEach(emp => {
+                    if (emp.isActive !== false) {
+                        const dispName = (emp.name && emp.name !== "undefined") ? emp.name : emp.email;
+                        advSelect.innerHTML += `<option value="${emp.id}">${emp.employeeId || 'ID'} - ${dispName}</option>`;
+                    }
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        // ================= ADD & MANAGE MID-MONTH ADVANCE =================
+        document.getElementById('addAdvanceBtn').addEventListener('click', async () => {
+            const empId = document.getElementById('advEmpSelect').value;
+            const amount = Number(document.getElementById('advAmount').value);
+            const dateStr = document.getElementById('advDate').value;
+            const note = document.getElementById('advNote').value.trim();
+            const btn = document.getElementById('addAdvanceBtn');
+
+            if (!empId) return alert("Please select an employee!");
+            if (!amount || amount <= 0) return alert("Please enter a valid advance amount!");
+            if (!dateStr) return alert("Please select the date!");
+
+            const empObj = allEmployees.find(e => e.id === empId);
+            const dispName = empObj ? ((empObj.name && empObj.name !== "undefined") ? empObj.name : empObj.email) : "Employee";
+            const monthKey = dateStr.substring(0, 7); // YYYY-MM
+
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+
+            try {
+                await addDoc(collection(db, "salary_advances"), {
+                    uid: empId,
+                    employeeId: empObj?.employeeId || "N/A",
+                    employeeName: dispName,
+                    amount: amount,
+                    date: dateStr,
+                    month: monthKey,
+                    note: note || "Mid-Month Advance",
+                    createdAt: Date.now()
+                });
+
+                alert(`✅ ₹${amount.toLocaleString()} advance saved for ${dispName} (${monthKey})!`);
+                document.getElementById('advAmount').value = "";
+                document.getElementById('advNote').value = "";
+
+                // Refresh if viewing the same month
+                const selectedMonth = document.getElementById('monthFilter').value;
+                if (selectedMonth === monthKey) {
+                    await generateSalaryData(selectedMonth);
+                }
+            } catch (e) {
+                alert("Error saving advance: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "➕ Add Advance";
+            }
+        });
+
+        window.viewEmpAdvances = function(empId, empName) {
+            const list = rawAdvancesList.filter(a => a.uid === empId);
+            document.getElementById('advModalTitle').innerText = `Advances: ${empName}`;
+            const content = document.getElementById('advModalContent');
+
+            if (list.length === 0) {
+                content.innerHTML = `<p style="color:#aaa; text-align:center;">No advance taken in this month.</p>`;
+            } else {
+                let html = "";
+                list.forEach(item => {
+                    html += `
+                        <div style="background:#1a1a1a; padding:10px 12px; border-radius:6px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; border-left:3px solid #f39c12;">
+                            <div>
+                                <strong style="color:#f39c12; font-size:15px;">₹${Number(item.amount).toLocaleString()}</strong>
+                                <span style="color:#aaa; font-size:12px; margin-left:8px;">📅 ${item.date}</span>
+                                <div style="color:#ccc; font-size:12px; margin-top:3px;">${item.note || ''}</div>
+                            </div>
+                            <button onclick="deleteAdvance('${item.docId}')" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold;">🗑️ Delete</button>
+                        </div>
+                    `;
+                });
+                content.innerHTML = html;
+            }
+            document.getElementById('advanceModal').style.display = 'flex';
+        };
+
+        window.deleteAdvance = async function(docId) {
+            if (!confirm("Are you sure you want to delete this advance entry?")) return;
+            try {
+                await deleteDoc(doc(db, "salary_advances", docId));
+                document.getElementById('advanceModal').style.display = 'none';
+                const selectedMonth = document.getElementById('monthFilter').value;
+                await generateSalaryData(selectedMonth);
+            } catch (e) {
+                alert("Error deleting advance: " + e.message);
+            }
+        };
+
+        // ================= GENERATE PAYROLL =================
+        document.getElementById('generateBtn').addEventListener('click', () => {
+            const selectedMonth = document.getElementById('monthFilter').value;
+            if(!selectedMonth) return alert("Please select a month!");
+            generateSalaryData(selectedMonth);
+        });
+
+        document.getElementById('monthFilter').addEventListener('change', (e) => {
+            if(e.target.value) generateSalaryData(e.target.value);
+        });
+
+        // WHATSAPP REDIRECT FUNCTION (Updated with Advance Deduction)
+        window.sendSalaryWA = function(empId, phone, name) {
+            const data = window.salaryDataCache[empId];
+            const monthStr = document.getElementById('monthFilter').value;
+            
+            let msg = `🏢 *HIRE YOUR VA - Salary Slip* 🏢\n\n`;
+            msg += `👤 *Name:* ${name}\n`;
+            msg += `📅 *Billing Month:* ${monthStr}\n\n`;
+            msg += `💰 *Base Salary:* ₹${data.base.toLocaleString()}\n`;
+            
+            if(data.lop > 0) msg += `❌ *Unpaid Absents (LOP):* ${data.lop} Days (-₹${data.lopDeduction.toLocaleString()})\n`;
+            if(data.bonus > 0) msg += `🎁 *Bonus/Extra:* +₹${data.bonus.toLocaleString()}\n`;
+            if(data.advance > 0) msg += `💸 *Advance Deducted:* -₹${data.advance.toLocaleString()}\n`;
+            
+            msg += `\n💵 *NET PAYABLE: ₹${data.net.toLocaleString()}*\n\n`;
+            msg += `_Thank you for your hard work!_`;
+            
+            const toast = document.getElementById("waToast");
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+            
+            const cleanPhone = phone.replace(/[^0-9]/g, ''); 
+            window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        async function generateSalaryData(monthStr) {
+            const grid = document.getElementById('salaryGrid');
+            const loading = document.getElementById('loadingMsg');
+            
+            grid.innerHTML = "";
+            loading.style.display = "block";
+            window.salaryDataCache = {};
+            
+            const [year, month] = monthStr.split('-');
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const startDate = `${monthStr}-01`;
+            const endDate = `${monthStr}-${daysInMonth}`;
+
+            let weekendsCount = 0;
+            for (let i = 1; i <= daysInMonth; i++) {
+                let d = new Date(year, month - 1, i);
+                if (d.getDay() === 0 || d.getDay() === 6) weekendsCount++; 
+            }
+
+            try {
+                // Check if Month is Locked in History
+                const histSnap = await getDoc(doc(db, "salary_history", monthStr));
+                const statusEl = document.getElementById('cycleStatusText');
+                if (histSnap.exists()) {
+                    statusEl.innerHTML = `✅ Paid & Locked in History`;
+                    statusEl.style.color = "#2ecc71";
+                } else {
+                    statusEl.innerHTML = `⏳ Open (15th Payout Cycle)`;
+                    statusEl.style.color = "#3498db";
+                }
+
+                // 1. Fetch Attendance
+                const attQ = query(collection(db, "attendance"), where("date", ">=", startDate), where("date", "<=", endDate));
+                const attSnap = await getDocs(attQ);
+                let attCountMap = {};
+                let penaltyMap = {}; 
+                let weekendWorkedMap = {}; 
+                rawAttendanceList = [];
+
+                attSnap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    rawAttendanceList.push(data);
+                    if(data.status === "COMPLETED" || data.status === "WORKING") {
+                        attCountMap[data.userId] = (attCountMap[data.userId] || 0) + 1;
+                        if(data.halfDayMarked && !data.adminRevokedLate) penaltyMap[data.userId] = (penaltyMap[data.userId] || 0) + 0.5;
+                        let punchDate = new Date(data.date);
+                        if(punchDate.getDay() === 0 || punchDate.getDay() === 6) weekendWorkedMap[data.userId] = (weekendWorkedMap[data.userId] || 0) + 1;
+                    }
+                });
+
+                // 2. Fetch Leaves
+                const leaveSnap = await getDocs(collection(db, "leaves"));
+                let leaveCountMap = {};
+                rawLeavesList = [];
+                leaveSnap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const lDate = data.fromDate || data.startDate || data.date || "";
+                    if (lDate.startsWith(monthStr)) {
+                        rawLeavesList.push(data);
+                        if(data.status === "APPROVED") {
+                            leaveCountMap[data.uid] = (leaveCountMap[data.uid] || 0) + Number(data.totalDays || data.days || 1);
+                        }
+                    }
+                });
+
+                // 3. Fetch Holidays
+                const holQ = query(collection(db, "holidays"), where("date", ">=", startDate), where("date", "<=", endDate));
+                const holSnap = await getDocs(holQ);
+                let holidaysCount = 0;
+                rawHolidaysList = [];
+                holSnap.forEach(docSnap => {
+                    const hData = docSnap.data();
+                    rawHolidaysList.push(hData);
+                    let holDate = new Date(hData.date);
+                    if(holDate.getDay() !== 0 && holDate.getDay() !== 6) holidaysCount++;
+                });
+
+                // 4. Fetch Mid-Month Advances
+                const advQ = query(collection(db, "salary_advances"), where("month", "==", monthStr));
+                const advSnap = await getDocs(advQ);
+                let advanceSumMap = {};
+                let advanceCountMap = {};
+                rawAdvancesList = [];
+                advSnap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    data.docId = docSnap.id;
+                    rawAdvancesList.push(data);
+                    advanceSumMap[data.uid] = (advanceSumMap[data.uid] || 0) + Number(data.amount || 0);
+                    advanceCountMap[data.uid] = (advanceCountMap[data.uid] || 0) + 1;
+                });
+
+                loading.style.display = "none";
+
+                allEmployees.forEach(emp => {
+                    const baseSalary = Number(emp.baseSalary || 0);
+                    const presentDays = attCountMap[emp.id] || 0;
+                    const halfDayPenalties = penaltyMap[emp.id] || 0;
+                    const approvedLeaves = leaveCountMap[emp.id] || 0;
+                    const weekendPunches = weekendWorkedMap[emp.id] || 0;
+                    const empAdvance = advanceSumMap[emp.id] || 0;
+                    const empAdvCount = advanceCountMap[emp.id] || 0;
+
+                    let phone = emp.phone || "";
+                    if(phone.length === 10) phone = "91" + phone;
+                    
+                    const displayName = (emp.name && emp.name !== "undefined") ? emp.name : (emp.email || "Unknown Employee");
+                    const safeName = displayName.replace(/'/g, "\\'");
+
+                    let autoLop = daysInMonth - (presentDays + approvedLeaves + weekendsCount + holidaysCount);
+                    if (autoLop < 0) autoLop = 0; 
+                    autoLop += halfDayPenalties;
+                    
+                    const card = document.createElement('div');
+                    card.className = "salary-card";
+
+                    card.innerHTML = `
+                        <h3>
+                            <span>${displayName} <small style="font-size:11px; color:#aaa; font-weight:normal;">(${emp.employeeId || 'N/A'})</small></span>
+                            <span style="font-size:12px; font-weight:normal; color:#aaa;">+${phone}</span>
+                        </h3>
+                        <div class="stat-row"><span>Base Salary:</span> <strong>₹${baseSalary.toLocaleString()}</strong></div>
+                        <div class="stat-row"><span>Days in Month:</span> <strong>${daysInMonth} Days</strong></div>
+                        <hr>
+                        <div class="stat-row"><span>Total Present (Punched In):</span> <strong style="color:#2ecc71;">${presentDays} Days</strong></div>
+                        <div class="stat-row"><span>Approved Leaves (Paid):</span> <strong>${approvedLeaves} Days</strong></div>
+                        <div class="stat-row"><span>Weekends & Holidays (Paid):</span> <strong>${weekendsCount + holidaysCount} Days</strong></div>
+                        
+                        ${halfDayPenalties > 0 ? `<div class="stat-row" style="color:#e74c3c;"><span>Late Penalty Deductions:</span> <strong>${halfDayPenalties} Days</strong></div>` : ""}
+                        
+                        ${weekendPunches > 0 ? `
+                        <div class="stat-row" style="color:#3498db; margin-top:10px; background:#111; padding:5px; border-radius:4px; border: 1px solid #3498db;">
+                            <span>⚠️ Worked on Weekends:</span> <strong style="color:white;">${weekendPunches} Days</strong>
+                        </div>
+                        <p style="font-size:11px; color:#aaa; margin:0 0 10px 0;">(Add extra pay for these weekend days in the Bonus box below)</p>` : ""}
+                        
+                        <div class="input-row" style="margin-top: 15px; border-left: 3px solid #e74c3c;">
+                            <span style="color: #e74c3c; font-weight: bold;">Unpaid Days (Auto LOP):</span>
+                            <input type="number" step="0.5" id="lop_${emp.id}" value="${autoLop}" min="0" oninput="calculateNet('${emp.id}', ${baseSalary}, ${daysInMonth})">
+                        </div>
+                        <div class="input-row" style="border-left: 3px solid #3498db;">
+                            <span>Add Bonus / Weekend Extra (₹):</span>
+                            <input type="number" id="bonus_${emp.id}" value="0" min="0" oninput="calculateNet('${emp.id}', ${baseSalary}, ${daysInMonth})">
+                        </div>
+                        <div class="input-row" style="border-left: 3px solid #f39c12;">
+                            <span style="color: #f39c12; font-weight: bold;">
+                                Advance Deducted (₹):
+                                <button type="button" class="btn-mini" onclick="viewEmpAdvances('${emp.id}', '${safeName}')">ℹ️ (${empAdvCount})</button>
+                            </span>
+                            <input type="number" id="adv_${emp.id}" value="${empAdvance}" min="0" oninput="calculateNet('${emp.id}', ${baseSalary}, ${daysInMonth})">
+                        </div>
+                        
+                        <div class="final-salary" id="net_${emp.id}">₹${baseSalary.toLocaleString()}</div>
+                        
+                        <button class="btn-wa" onclick="sendSalaryWA('${emp.id}', '${phone}', '${safeName}')">📲 Send Payslip via WhatsApp</button>
+                    `;
+                    grid.appendChild(card);
+                    
+                    // Store metadata for Excel & History
+                    window.salaryDataCache[emp.id] = {
+                        uid: emp.id,
+                        employeeId: emp.employeeId || "N/A",
+                        name: displayName,
+                        department: emp.department || "N/A",
+                        daysInMonth: daysInMonth,
+                        presentDays: presentDays,
+                        approvedLeaves: approvedLeaves,
+                        paidOffs: weekendsCount + holidaysCount,
+                        halfDayPenalties: halfDayPenalties
+                    };
+
+                    window.calculateNet(emp.id, baseSalary, daysInMonth);
+                });
+
+                if(allEmployees.length === 0) grid.innerHTML = "<p style='color: #aaa;'>No employees found.</p>";
+
+            } catch (error) {
+                loading.innerText = "Error calculating data: " + error.message;
+            }
+        }
+
+        window.calculateNet = function(empId, baseSalary, daysInMonth) {
+            const lopDays = Number(document.getElementById(`lop_${empId}`).value) || 0;
+            const bonus = Number(document.getElementById(`bonus_${empId}`).value) || 0;
+            const advance = Number(document.getElementById(`adv_${empId}`).value) || 0;
+            const perDayPay = baseSalary / daysInMonth;
+            
+            const lopDeduction = Math.round(lopDays * perDayPay);
+            let netSalary = baseSalary - (lopDays * perDayPay) + bonus - advance;
+            if(netSalary < 0) netSalary = 0;
+            netSalary = Math.round(netSalary);
+            
+            // Update global cache for WhatsApp, Excel & History Lock
+            window.salaryDataCache[empId] = {
+                ...(window.salaryDataCache[empId] || {}),
+                base: baseSalary,
+                lop: lopDays,
+                lopDeduction: lopDeduction,
+                bonus: bonus,
+                advance: advance,
+                net: netSalary
+            };
+            
+            document.getElementById(`net_${empId}`).innerText = `Net Pay: ₹${netSalary.toLocaleString()}`;
+            updateOverallSummaryBanner();
+        }
+
+        function updateOverallSummaryBanner() {
+            let totalAdv = 0;
+            let totalNet = 0;
+            Object.values(window.salaryDataCache).forEach(item => {
+                totalAdv += Number(item.advance || 0);
+                totalNet += Number(item.net || 0);
+            });
+            document.getElementById('totalMonthAdv').innerText = `₹${totalAdv.toLocaleString()}`;
+            document.getElementById('totalMonthNet').innerText = `₹${totalNet.toLocaleString()}`;
+        }
+
+        // ================= 3-IN-1 MULTI-TAB EXCEL EXPORT =================
+        function msToHMS(ms) {
+            if (!ms || ms < 0) return "00:00:00";
+            const secs = Math.floor(ms / 1000);
+            const h = String(Math.floor(secs / 3600)).padStart(2, '0');
+            const m = String(Math.floor((secs % 3600) / 60)).padStart(2, '0');
+            const s = String(secs % 60).padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+
+        document.getElementById('downloadExcelBtn').addEventListener('click', () => {
+            if (!window.XLSX) return alert("Excel library is loading, please wait a moment.");
+            const monthStr = document.getElementById('monthFilter').value || "Report";
+
+            const empMap = {};
+            allEmployees.forEach(e => { empMap[e.id] = e; });
+
+            // TAB 1: SALARY SHEET
+            const salaryRows = Object.values(window.salaryDataCache).map(d => ({
+                "Billing Month": monthStr,
+                "Employee ID": d.employeeId,
+                "Employee Name": d.name,
+                "Department": d.department,
+                "Base Salary (₹)": d.base,
+                "Days in Month": d.daysInMonth,
+                "Present Days": d.presentDays,
+                "Approved Leaves": d.approvedLeaves,
+                "Weekends & Holidays": d.paidOffs,
+                "Late Penalties (Days)": d.halfDayPenalties,
+                "Unpaid LOP Days": d.lop,
+                "LOP Deduction (₹)": d.lopDeduction,
+                "Bonus / Extra (₹)": d.bonus,
+                "Advance Deducted (₹)": d.advance,
+                "Net Payable Salary (₹)": d.net
+            }));
+
+            // TAB 2: ATTENDANCE LOGS
+            const sortedAtt = [...rawAttendanceList].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+            const attRows = sortedAtt.map(att => {
+                const emp = empMap[att.userId] || {};
+                let breakMs = 0;
+                if (att.breaks && Array.isArray(att.breaks)) {
+                    att.breaks.forEach(b => { if (b.start && b.end) breakMs += (b.end - b.start); });
+                }
+                const netMs = (att.clockIn && att.clockOut) ? Math.max(0, (att.clockOut - att.clockIn) - breakMs) : 0;
+
+                return {
+                    "Date": att.date || "N/A",
+                    "Employee ID": emp.employeeId || "N/A",
+                    "Employee Name": (emp.name && emp.name !== "undefined") ? emp.name : "Unknown",
+                    "Shift Status": att.status || "N/A",
+                    "Clock In": att.clockIn ? new Date(att.clockIn).toLocaleTimeString() : "--:--",
+                    "Clock Out": att.clockOut ? new Date(att.clockOut).toLocaleTimeString() : "--:--",
+                    "Break Duration": msToHMS(breakMs),
+                    "Net Worked Hours": msToHMS(netMs),
+                    "Late Half-Day": (att.halfDayMarked && !att.adminRevokedLate) ? "YES" : "NO"
+                };
+            });
+
+            // TAB 3: LEAVES & ADVANCES
+            const leaveAndAdvRows = [];
+            rawLeavesList.forEach(l => {
+                const emp = empMap[l.uid] || {};
+                leaveAndAdvRows.push({
+                    "Type": "LEAVE",
+                    "Employee ID": emp.employeeId || "N/A",
+                    "Employee Name": (emp.name && emp.name !== "undefined") ? emp.name : (l.name || "Unknown"),
+                    "From Date": l.fromDate || l.startDate || l.date || "N/A",
+                    "To Date": l.toDate || l.endDate || "-",
+                    "Days / Amount": `${l.totalDays || l.days || 1} Days`,
+                    "Status": l.status || "PENDING",
+                    "Reason / Note": l.reason || "N/A"
+                });
+            });
+
+            rawAdvancesList.forEach(adv => {
+                leaveAndAdvRows.push({
+                    "Type": "SALARY ADVANCE",
+                    "Employee ID": adv.employeeId || "N/A",
+                    "Employee Name": adv.employeeName || "Unknown",
+                    "From Date": adv.date || "N/A",
+                    "To Date": "-",
+                    "Days / Amount": `₹${adv.amount}`,
+                    "Status": "DEDUCTED",
+                    "Reason / Note": adv.note || "Mid-Month Advance"
+                });
+            });
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salaryRows.length ? salaryRows : [{"Info": "No salary data"}]), "Salary_Sheet");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(attRows.length ? attRows : [{"Info": "No attendance data"}]), "Attendance_Logs");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(leaveAndAdvRows.length ? leaveAndAdvRows : [{"Info": "No leaves or advances"}]), "Leaves_And_Advances");
+
+            XLSX.writeFile(wb, `HireYourVA_Monthly_Report_${monthStr}.xlsx`);
+        });
+
+        // ================= LOCK SALARY & SAVE TO HISTORY ARCHIVE =================
+        document.getElementById('lockHistoryBtn').addEventListener('click', async () => {
+            const monthStr = document.getElementById('monthFilter').value;
+            const records = Object.values(window.salaryDataCache);
+            if (!monthStr || records.length === 0) return alert("Please calculate payroll first!");
+
+            const totalNet = records.reduce((s, r) => s + Number(r.net || 0), 0);
+            const totalAdv = records.reduce((s, r) => s + Number(r.advance || 0), 0);
+
+            if (!confirm(`Lock & Save Salary Sheet for ${monthStr}?\n\nTotal Net Payout: ₹${totalNet.toLocaleString()}\nThis will save a permanent record in Salary History.`)) return;
+
+            const btn = document.getElementById('lockHistoryBtn');
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+
+            try {
+                await setDoc(doc(db, "salary_history", monthStr), {
+                    month: monthStr,
+                    totalNetPayout: totalNet,
+                    totalAdvanceDeducted: totalAdv,
+                    employeeCount: records.length,
+                    lockedAt: Date.now(),
+                    records: records
+                });
+
+                alert(`✅ Salary Sheet for ${monthStr} locked and archived in History!`);
+                document.getElementById('cycleStatusText').innerHTML = `✅ Paid & Locked in History`;
+                document.getElementById('cycleStatusText').style.color = "#2ecc71";
+                await loadSalaryHistory();
+            } catch (e) {
+                alert("Error locking salary history: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "🔒 Lock & Save to History (15th Payout)";
+            }
+        });
+
+        async function loadSalaryHistory() {
+            const container = document.getElementById('historyContainer');
+            try {
+                const snap = await getDocs(collection(db, "salary_history"));
+                let historyList = [];
+                snap.forEach(d => historyList.push(d.data()));
+
+                historyList.sort((a, b) => (b.month || "").localeCompare(a.month || ""));
+
+                if (historyList.length === 0) {
+                    container.innerHTML = `<p style="color:#aaa; text-align:center;">No locked salary history yet. Click "Lock & Save to History" after sending salaries on the 15th.</p>`;
+                    return;
+                }
+
+                let html = "";
+                historyList.forEach((h, idx) => {
+                    const lockedDate = h.lockedAt ? new Date(h.lockedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+                    
+                    let rowsHtml = "";
+                    (h.records || []).forEach(r => {
+                        rowsHtml += `
+                            <tr>
+                                <td><strong>${r.employeeId || 'N/A'}</strong></td>
+                                <td>${r.name}</td>
+                                <td>₹${Number(r.base || 0).toLocaleString()}</td>
+                                <td style="color:#e74c3c;">${r.lop || 0} Days (-₹${Number(r.lopDeduction || 0).toLocaleString()})</td>
+                                <td style="color:#3498db;">+₹${Number(r.bonus || 0).toLocaleString()}</td>
+                                <td style="color:#f39c12;">-₹${Number(r.advance || 0).toLocaleString()}</td>
+                                <td style="color:#2ecc71; font-weight:bold;">₹${Number(r.net || 0).toLocaleString()}</td>
+                            </tr>
+                        `;
+                    });
+
+                    html += `
+                        <div class="history-item">
+                            <div class="history-header" onclick="toggleHistBody('hist_body_${idx}')">
+                                <div>
+                                    <strong style="font-size:16px; color:#fff;">📅 Billing Month: ${h.month}</strong>
+                                    <span style="font-size:12px; color:#aaa; margin-left:10px;">(Saved on ${lockedDate} • ${h.employeeCount || 0} Staff)</span>
+                                </div>
+                                <div>
+                                    <span style="font-size:12px; color:#f39c12; margin-right:12px;">Advances Adjusted: ₹${Number(h.totalAdvanceDeducted || 0).toLocaleString()}</span>
+                                    <strong style="font-size:16px; color:#2ecc71;">Total Paid: ₹${Number(h.totalNetPayout || 0).toLocaleString()} ▾</strong>
+                                </div>
+                            </div>
+                            <div class="history-body" id="hist_body_${idx}">
+                                <table class="sub-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Emp ID</th>
+                                            <th>Name</th>
+                                            <th>Base Salary</th>
+                                            <th>Unpaid LOP</th>
+                                            <th>Bonus</th>
+                                            <th>Advance Deducted</th>
+                                            <th>Net Paid</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${rowsHtml}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            } catch (e) {
+                container.innerHTML = `<p style="color:#e74c3c;">Error loading history: ${e.message}</p>`;
+            }
+        }
+
+        window.toggleHistBody = function(id) {
+            const el = document.getElementById(id);
+            if (el) el.style.display = (el.style.display === "block") ? "none" : "block";
+        };
+    </script>
+</body>
+</html>

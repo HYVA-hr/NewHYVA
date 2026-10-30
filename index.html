@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIRE YOUR VA - Login</title>
+    <!-- PWA & iPhone (iOS) Support Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2ecc71">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HireYourVA">
+    <link rel="apple-touch-icon" href="logo.png">
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #1a1a1a; 
+            color: #f5f5dc; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            flex-direction: column; 
+            padding: 20px; 
+            box-sizing: border-box;
+        }
+        .login-card { 
+            background: #242424; 
+            padding: 30px 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5); 
+            width: 100%; 
+            max-width: 400px; 
+            text-align: center; 
+            border-top: 5px solid #2ecc71; 
+            box-sizing: border-box;
+        }
+        .login-card img { max-height: 70px; margin-bottom: 20px; border-radius: 6px; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; font-size: 14px; color: #aaa; margin-bottom: 8px; }
+        input { width: 100%; padding: 12px; border: 1px solid #444; border-radius: 6px; background-color: #333; color: white; font-size: 15px; box-sizing: border-box; }
+        button.login-btn { width: 100%; padding: 14px; background-color: #2ecc71; color: #111; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 5px; }
+        button.login-btn:hover { background-color: #27ae60; }
+        #errorMsg { color: #e74c3c; font-size: 14px; margin-top: 15px; font-weight: bold; }
+        
+        .forgot-link { display: block; margin-top: 15px; color: #3498db; font-size: 14px; text-decoration: none; cursor: pointer; }
+        .forgot-link:hover { text-decoration: underline; }
+
+        /* iOS Banner Style - UI Fixed */
+        #iosInstallBanner { 
+            display: none; 
+            background: #242424; 
+            color: #f5f5dc; 
+            padding: 12px 20px; 
+            text-align: center; 
+            border-radius: 8px; 
+            border-bottom: 3px solid #3498db; 
+            font-size: 14px; 
+            max-width: 400px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+    </style>
+    <!-- HYVA professional theme layer (additive; remove these 2 lines to roll back) -->
+    <link rel="stylesheet" href="hyva-theme.css">
+    <script src="hyva-motion.js"></script>
+</head>
+<body>
+
+    <!-- iOS Install Banner (Only visible on iPhone Safari if not installed) -->
+    <div id="iosInstallBanner">
+        📲 To install this app on iPhone: Tap the <strong>Share</strong> button <span style="font-size:18px;">📤</span> below and select <strong>"Add to Home Screen"</strong>.
+    </div>
+
+    <div class="login-card">
+        <img src="logo.png" alt="Hire Your VA" onerror="this.style.display='none'">
+        <h2 style="color: #f5f5dc; margin-top: 0; margin-bottom: 20px;">Portal Login</h2>
+        
+        <form id="loginForm">
+            <div class="input-group">
+                <label>Email Address</label>
+                <input type="email" id="email" required placeholder="Enter your email">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" required placeholder="Enter your password">
+            </div>
+            <button type="submit" class="login-btn" id="submitBtn">Login</button>
+            <a class="forgot-link" id="forgotBtn">Forgot Password?</a>
+            <div id="errorMsg"></div>
+        </form>
+
+        <!-- APP DOWNLOAD SECTION (Updated with HireYourVA.apk) -->
+        <div style="text-align: center; margin-top: 25px; border-top: 1px solid #444; padding-top: 15px;">
+            <p style="color: #aaa; font-size: 13px; margin-top: 0; margin-bottom: 12px;">For better experience & shift alarms</p>
+            <a href="HireYourVA.apk" download="HireYourVA.apk" style="display: inline-block; background: #3498db; color: white; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; width: 100%; box-sizing: border-box; transition: background-color 0.3s;">
+                ⬇️ Download Android App
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Service Worker Registration for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log("Service Worker Registered Successfully"))
+                .catch((err) => console.log("Service Worker Registration Failed", err));
+        }
+
+        // Detect iOS and show Install Banner if not in standalone mode
+        const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+        const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator.standalone);
+        if (isIos && !isInStandaloneMode) {
+            document.getElementById('iosInstallBanner').style.display = 'block';
+        }
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        // Added onAuthStateChanged, setPersistence, browserLocalPersistence
+        import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAw8NhVWaoMbm-CiED4M_K02wOSRtV2LUc",
+            authDomain: "hire-your-va-hr.firebaseapp.com",
+            projectId: "hire-your-va-hr",
+            storageBucket: "hire-your-va-hr.firebasestorage.app",
+            messagingSenderId: "75356368308",
+            appId: "1:75356368308:web:be5c4cfaa62c72efced6e1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // ENFORCE LOCAL PERSISTENCE & AUTO-LOGIN FIX
+        setPersistence(auth, browserLocalPersistence)
+            .then(() => {
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        // User is already logged in, redirect directly to avoid manual login
+                        const submitBtn = document.getElementById('submitBtn');
+                        const errorMsg = document.getElementById('errorMsg');
+                        if (submitBtn) submitBtn.disabled = true;
+                        if (errorMsg) {
+                            errorMsg.style.color = "#2ecc71";
+                            errorMsg.innerText = "Session restored. Redirecting...";
+                        }
+                        await checkUserRoleAndRedirect(user.uid);
+                    }
+                });
+            })
+            .catch((error) => console.error("Auth Persistence Error:", error));
+
+        // Handle Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            const submitBtn = document.getElementById('submitBtn');
+
+            errorMsg.innerText = "Logging in...";
+            errorMsg.style.color = "#f39c12";
+            submitBtn.disabled = true;
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const uid = userCredential.user.uid;
+
+                // Check if account is active
+                const docRef = doc(db, "employees", uid);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const userData = docSnap.data();
+                    // If marked inactive/terminated, block access
+                    if (userData.isActive === false) {
+                        await signOut(auth);
+                        errorMsg.innerText = "Access Denied: Your account has been terminated/blocked.";
+                        errorMsg.style.color = "#e74c3c";
+                        submitBtn.disabled = false;
+                        return;
+                    }
+                }
+
+                await checkUserRoleAndRedirect(uid);
+            } catch (error) {
+                errorMsg.innerText = "Error: " + error.message;
+                errorMsg.style.color = "#e74c3c";
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Handle Forgot Password
+        document.getElementById('forgotBtn').addEventListener('click', async () => {
+            const email = document.getElementById('email').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+
+            if (!email) {
+                errorMsg.innerText = "Please enter your Email address above first.";
+                errorMsg.style.color = "#f39c12";
+                return;
+            }
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                errorMsg.innerText = "Password reset link sent to your email inbox!";
+                errorMsg.style.color = "#2ecc71";
+            } catch (error) {
+                errorMsg.innerText = "Error: " + error.message;
+                errorMsg.style.color = "#e74c3c";
+            }
+        });
+
+        async function checkUserRoleAndRedirect(uid) {
+            try {
+                const docRef = doc(db, "employees", uid);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const userData = docSnap.data();
+                    if (userData.role === "ADMIN") {
+                        window.location.href = "admin-dashboard.html";
+                    } else {
+                        window.location.href = "employee-dashboard.html";
+                    }
+                } else {
+                    window.location.href = "admin-dashboard.html";
+                }
+            } catch (error) {
+                document.getElementById('errorMsg').innerText = "Role check failed: " + error.message;
+                document.getElementById('submitBtn').disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

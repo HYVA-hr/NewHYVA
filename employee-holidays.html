@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIRE YOUR VA - Company Holidays</title>
+    <!-- PWA & iPhone (iOS) Support Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#9b59b6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HireYourVA">
+    <link rel="apple-touch-icon" href="logo.png">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: #f5f5dc;
+            margin: 0;
+            padding: 0;
+            font-size: 15px;
+        }
+        .header {
+            background-color: #242424;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .header img {
+            max-height: 40px;
+            border-radius: 4px;
+        }
+        .btn-back {
+            background-color: #555;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+        .btn-back:hover {
+            background-color: #777;
+        }
+        
+        .container {
+            padding: 20px 15px;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        .card {
+            background: #242424;
+            padding: 22px 18px;
+            border-radius: 10px;
+            border-top: 4px solid #9b59b6;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+        h2 {
+            margin-top: 0;
+            color: #9b59b6;
+            font-size: 22px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .holiday-item {
+            background: #1a1a1a;
+            padding: 14px 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 5px solid #9b59b6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .holiday-info h4 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            color: #fff;
+        }
+        .holiday-info p {
+            margin: 0;
+            font-size: 13px;
+            color: #aaa;
+        }
+        .holiday-badge {
+            background: rgba(155, 89, 182, 0.2);
+            color: #bb86fc;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: right;
+            border: 1px solid rgba(155, 89, 182, 0.4);
+        }
+    </style>
+    <!-- HYVA professional theme layer (additive; remove these 2 lines to roll back) -->
+    <link rel="stylesheet" href="hyva-theme.css">
+    <script src="hyva-motion.js"></script>
+</head>
+<body>
+
+    <div class="header">
+        <img src="logo.png" alt="Hire Your VA" onerror="this.style.display='none'">
+        <a href="employee-dashboard.html" class="btn-back">Back to Dashboard</a>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>🏖️ Company Holiday Calendar</h2>
+            <div id="holidaysList">
+                <p style="color: #aaa; text-align: center;">Loading holidays...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAw8NhVWaoMbm-CiED4M_K02wOSRtV2LUc",
+            authDomain: "hire-your-va-hr.firebaseapp.com",
+            projectId: "hire-your-va-hr",
+            storageBucket: "hire-your-va-hr.firebasestorage.app",
+            messagingSenderId: "75356368308",
+            appId: "1:75356368308:web:be5c4cfaa62c72efced6e1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Service Worker Registration for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log("Service Worker Registered Successfully"))
+                .catch((err) => console.log("Service Worker Registration Failed", err));
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "index.html";
+            } else {
+                fetchHolidays();
+            }
+        });
+
+        async function fetchHolidays() {
+            const listDiv = document.getElementById('holidaysList');
+            try {
+                const snap = await getDocs(collection(db, "holidays"));
+                if (snap.empty) {
+                    listDiv.innerHTML = "<p style='color: #aaa; text-align: center;'>No holidays scheduled yet.</p>";
+                    return;
+                }
+
+                let holidays = [];
+                snap.forEach(docSnap => {
+                    holidays.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                // Sort by date ascending
+                holidays.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                let html = "";
+                holidays.forEach(h => {
+                    const dateObj = new Date(h.date);
+                    const dayName = isNaN(dateObj) ? "" : dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                    
+                    html += `
+                        <div class="holiday-item">
+                            <div class="holiday-info">
+                                <h4>${h.name || h.title || "Official Holiday"}</h4>
+                                <p>📅 ${h.date} ${dayName ? `(${dayName})` : ""}</p>
+                            </div>
+                            <div class="holiday-badge">Holiday</div>
+                        </div>
+                    `;
+                });
+                listDiv.innerHTML = html;
+            } catch (error) {
+                console.error("Error loading holidays:", error);
+                listDiv.innerHTML = "<p style='color: #e74c3c; text-align: center;'>Failed to load holidays.</p>";
+            }
+        }
+    </script>
+</body>
+</html>

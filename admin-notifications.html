@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIRE YOUR VA - Admin Notifications</title>
+    <!-- PWA & iPhone (iOS) Support Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2ecc71">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HireYourVA">
+    <link rel="apple-touch-icon" href="logo.png">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1a; color: #f5f5dc; margin: 0; padding: 0; font-size: 15px; }
+        .header { background-color: #242424; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .header img { max-height: 40px; border-radius: 4px; }
+        .btn-back { background-color: #555; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; text-decoration: none; font-weight: bold; font-size: 13px; }
+        .btn-back:hover { background-color: #777; }
+        
+        .container { padding: 20px; max-width: 600px; margin: 20px auto; }
+        .card { background: #242424; padding: 20px; border-radius: 10px; border-top: 4px solid #2ecc71; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        h2 { margin-top: 0; color: #2ecc71; font-size: 22px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        
+        .notif-card-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 5px solid #f39c12; }
+        .notif-card-item p { margin: 5px 0; font-size: 14px; color: #ccc; }
+        .btn-action { background: #2ecc71; color: #111; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; text-decoration: none; display: inline-block; font-size: 13px; }
+        .btn-action:hover { background: #27ae60; }
+    </style>
+    <!-- HYVA professional theme layer (additive; remove these 2 lines to roll back) -->
+    <link rel="stylesheet" href="hyva-theme.css">
+    <script src="hyva-motion.js"></script>
+</head>
+<body>
+
+    <div class="header">
+        <img src="logo.png" alt="Hire Your VA" onerror="this.style.display='none'">
+        <a href="admin-dashboard.html" class="btn-back">Back to Dashboard</a>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>Pending Leave Requests</h2>
+            <div id="adminNotifList">
+                <p style="color: #aaa; text-align: center;">Loading notifications...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAw8NhVWaoMbm-CiED4M_K02wOSRtV2LUc",
+            authDomain: "hire-your-va-hr.firebaseapp.com",
+            projectId: "hire-your-va-hr",
+            storageBucket: "hire-your-va-hr.firebasestorage.app",
+            messagingSenderId: "75356368308",
+            appId: "1:75356368308:web:be5c4cfaa62c72efced6e1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = "index.html";
+            } else {
+                fetchAdminPendingLeaves();
+            }
+        });
+
+        async function fetchAdminPendingLeaves() {
+            const listDiv = document.getElementById('adminNotifList');
+            try {
+                const q = query(collection(db, "leaves"), where("status", "==", "PENDING"));
+                const snap = await getDocs(q);
+
+                if (snap.empty) {
+                    listDiv.innerHTML = "<p style='color: #aaa; text-align: center;'>No pending requests.</p>";
+                    return;
+                }
+
+                let html = "";
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    html += `
+                        <div class="notif-card-item">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong style="color: #fff; font-size: 15px;">New Leave Request</strong>
+                                <span style="color: #f39c12; font-weight: bold; font-size: 13px;">PENDING</span>
+                            </div>
+                            <p><strong>Duration:</strong> ${data.fromDate} to ${data.toDate} (${data.totalDays} Days)</p>
+                            <p><strong>Reason:</strong> ${data.reason}</p>
+                            <a href="admin-leaves.html" class="btn-action">Review in Leave Approvals</a>
+                        </div>
+                    `;
+                });
+
+                listDiv.innerHTML = html;
+            } catch (e) {
+                listDiv.innerHTML = "<p style='color: red; text-align: center;'>Error loading requests.</p>";
+            }
+        }
+    </script>
+</body>
+</html>
