@@ -1,0 +1,138 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch: 
+  push:
+    branches:
+      - main
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Prepare Web Assets & Install Capacitor
+        run: |
+          mkdir www
+          cp -r *.html *.js *.css *.json *.png *.jpg www/ 2>/dev/null || :
+          
+          sed -i 's/<body/<body style="background-color: #1a1a1a !important;"/gi' www/*.html || true
+          
+          npm init -y
+          # Push Notifications Plugin Added
+          npm install @capacitor/core@latest @capacitor/android@latest @capacitor/splash-screen@latest @capacitor/local-notifications@latest @capacitor/push-notifications@latest @capacitor/geolocation@latest @capacitor/cli@latest @capacitor/assets@latest
+          
+          npm install -g esbuild
+          echo "import { LocalNotifications } from '@capacitor/local-notifications'; import { Geolocation } from '@capacitor/geolocation'; import { PushNotifications } from '@capacitor/push-notifications'; window.LocalNotifications = LocalNotifications; window.Geolocation = Geolocation; window.PushNotifications = PushNotifications;" > bundle_entry.js
+          npx esbuild bundle_entry.js --bundle --outfile=www/plugins.js --minify
+          
+          cat <<EOF > capacitor.config.json
+          {
+            "appId": "com.hireyourva.hr",
+            "appName": "HireYourVA",
+            "webDir": "www",
+            "backgroundColor": "#1a1a1a",
+            "plugins": {
+              "SplashScreen": {
+                "launchShowDuration": 3000,
+                "launchAutoHide": true,
+                "backgroundColor": "#1a1a1a",
+                "androidSplashResourceName": "splash",
+                "showSpinner": false
+              },
+              "PushNotifications": {
+                "presentationOptions": ["badge", "sound", "alert"]
+              }
+            }
+          }
+          EOF
+          
+          npx cap add android
+
+      - name: Inject Firebase Cloud Messaging (FCM) System
+        run: |
+          cp google-services.json android/app/ || echo "WARNING: google-services.json NOT FOUND!"
+          sed -i 's/classpath .com.android.tools.build:gradle.*/&\n        classpath "com.google.gms:google-services:4.4.1"/g' android/build.gradle
+          echo "apply plugin: 'com.google.gms.google-services'" >> android/app/build.gradle
+
+      - name: Generate App Icon & Splash Screen
+        run: |
+          mkdir assets
+          cp logo.png assets/icon.png
+          cp logo.png assets/splash.png
+          
+          npx capacitor-assets generate --android
+          npx cap sync android
+
+      - name: Inject Notification Sound & Native Permissions
+        run: |
+          mkdir -p android/app/src/main/res/raw
+          cp notification.mp3 android/app/src/main/res/raw/notification.mp3 || echo "No MP3 found"
+          sed -i 's/<\/manifest>/    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" \/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" \/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" \/>\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" \/>\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" \/>\n    <uses-permission android:name="android.permission.WAKE_LOCK" \/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" \/>\n<\/manifest>/g' android/app/src/main/AndroidManifest.xml
+
+      - name: Nuke White Screen & Rewrite Android Theme
+        run: |
+          mkdir -p android/app/src/main/res/values-v31
+          
+          cat <<EOF > android/app/src/main/res/values/styles.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="AppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
+                  <item name="colorPrimary">#1a1a1a</item>
+                  <item name="colorPrimaryDark">#1a1a1a</item>
+                  <item name="colorAccent">#2ecc71</item>
+              </style>
+              <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+                  <item name="windowActionBar">false</item>
+                  <item name="windowNoTitle">true</item>
+                  <item name="android:background">#1a1a1a</item>
+                  <item name="android:windowBackground">#1a1a1a</item>
+              </style>
+              <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+                  <item name="windowSplashScreenBackground">#1a1a1a</item>
+                  <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+              </style>
+          </resources>
+          EOF
+
+          cat <<EOF > android/app/src/main/res/values-v31/styles.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+                  <item name="windowSplashScreenBackground">#1a1a1a</item>
+                  <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_round</item>
+                  <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+              </style>
+          </resources>
+          EOF
+
+      - name: Fix Kotlin Duplicate Class Error
+        run: |
+          echo "configurations.all { exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8' }" >> android/app/build.gradle
+          echo "configurations.all { exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7' }" >> android/app/build.gradle
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HireYourVA-App
+          path: android/app/build/outputs/apk/debug/app-debug.apk
