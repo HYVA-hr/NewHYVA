@@ -65,6 +65,19 @@
             </form>
         </div>
 
+        <!-- NEW: Weekend / Holiday lock override -->
+        <div class="add-card" style="border-top-color: #f39c12;">
+            <h2 style="color: #f39c12; font-size: 20px;">🔒 Weekend / Holiday Lock</h2>
+            <p style="color: #aaa; font-size: 13px; margin-top: 0;">Clock In / Clock Out is locked for everyone after 12:00 PM IST on Saturdays, Sundays and official holidays. To allow work on a specific date (e.g. training), unlock that date here.</p>
+            <div class="input-group">
+                <label>Date to Unlock</label>
+                <input type="date" id="unlockDate">
+            </div>
+            <button type="button" class="submit-btn" id="unlockBtn">🔓 Unlock This Date For Everyone</button>
+            <div id="unlockStatus" style="text-align: center; margin-top: 10px; font-size: 13px;"></div>
+            <div id="unlockedList" style="margin-top: 12px;"></div>
+        </div>
+
         <!-- List of Holidays -->
         <h2 style="color: #e74c3c; border-bottom: 2px solid #e74c3c; padding-bottom: 5px;">Saved Holidays</h2>
         <div id="holidaysContainer">
@@ -76,6 +89,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAw8NhVWaoMbm-CiED4M_K02wOSRtV2LUc",
@@ -171,6 +185,77 @@
                 fetchHolidays();
             } catch(e) { alert("Error deleting: " + e.message); }
         }
+
+        // =========================================================================
+        // NEW: Weekend / Holiday lock override (admin unlocks specific dates)
+        // Stored in Firestore: settings/attendance_lock -> { unlockedDates: ["YYYY-MM-DD", ...] }
+        // =========================================================================
+        const LOCK_REF = doc(db, "settings", "attendance_lock");
+
+        async function loadUnlockedDates() {
+            try {
+                const snap = await getDoc(LOCK_REF);
+                return snap.exists() ? (snap.data().unlockedDates || []) : [];
+            } catch (e) { return null; }
+        }
+
+        async function renderUnlockedDates() {
+            const list = document.getElementById("unlockedList");
+            const dates = await loadUnlockedDates();
+            if (dates === null) { list.innerHTML = "<p style='color:#e74c3c; font-size:13px;'>Could not load unlocked dates.</p>"; return; }
+            if (dates.length === 0) { list.innerHTML = "<p style='color:#aaa; font-size:13px; text-align:center;'>No dates unlocked. Weekend/holiday lock is active everywhere.</p>"; return; }
+            dates.sort();
+            list.innerHTML = "";
+            dates.forEach(d => {
+                const row = document.createElement("div");
+                row.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #333; font-size:14px;";
+                const label = document.createElement("span");
+                const dt = new Date(d + "T00:00:00");
+                label.textContent = "🔓 " + dt.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+                const btn = document.createElement("button");
+                btn.textContent = "🔒 Re-lock";
+                btn.className = "btn-delete";
+                btn.addEventListener("click", () => relockDate(d));
+                row.appendChild(label);
+                row.appendChild(btn);
+                list.appendChild(row);
+            });
+        }
+
+        async function relockDate(dateStr) {
+            try {
+                const dates = (await loadUnlockedDates()) || [];
+                await setDoc(LOCK_REF, { unlockedDates: dates.filter(x => x !== dateStr) }, { merge: true });
+                renderUnlockedDates();
+            } catch (e) { alert("Error: " + e.message); }
+        }
+
+        document.getElementById("unlockBtn").addEventListener("click", async () => {
+            const status = document.getElementById("unlockStatus");
+            const dateVal = document.getElementById("unlockDate").value;
+            if (!dateVal) { status.style.color = "#e74c3c"; status.innerText = "Please select a date."; return; }
+            const btn = document.getElementById("unlockBtn");
+            btn.disabled = true;
+            status.style.color = "#f39c12";
+            status.innerText = "Saving...";
+            try {
+                const dates = (await loadUnlockedDates()) || [];
+                if (!dates.includes(dateVal)) dates.push(dateVal);
+                await setDoc(LOCK_REF, { unlockedDates: dates }, { merge: true });
+                status.style.color = "#2ecc71";
+                status.innerText = "Date unlocked for all employees.";
+                document.getElementById("unlockDate").value = "";
+                renderUnlockedDates();
+            } catch (e) {
+                status.style.color = "#e74c3c";
+                status.innerText = "Error: " + e.message;
+            } finally {
+                btn.disabled = false;
+                setTimeout(() => status.innerText = "", 3500);
+            }
+        });
+
+        renderUnlockedDates();
     </script>
 </body>
 </html>
