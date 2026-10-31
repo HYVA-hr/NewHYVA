@@ -88,7 +88,7 @@ h2:not(.login-card h2)::after {
 }
 
 /* ---------- Cards / panels (embossed) ---------- */
-.card, .login-card, .summary-box, .summary-banner, .history-card,
+.card, .add-card, .login-card, .summary-box, .summary-banner, .history-card,
 .history-section, .history-list-box, .holiday-item, .notif-card-item,
 .leave-item, .profile-detail, .stat-row, .modal-content, .modal-box,
 .custom-popup-box {
@@ -97,8 +97,8 @@ h2:not(.login-card h2)::after {
   box-shadow: var(--hy-emboss) !important;
   transition: transform .35s var(--hy-ease-out), box-shadow .35s var(--hy-ease-out);
 }
-.card, .login-card { border-top: 3px solid var(--hy-mint) !important; border-radius: 14px !important; }
-.card:hover, .holiday-item:hover, .notif-card-item:hover, .history-card:hover, .leave-item:hover {
+.card, .add-card, .login-card { border-top: 3px solid var(--hy-mint) !important; border-radius: 14px !important; }
+.card:hover, .add-card:hover, .holiday-item:hover, .notif-card-item:hover, .history-card:hover, .leave-item:hover {
   transform: translateY(-3px);
   box-shadow: var(--hy-emboss-hover) !important;
 }
@@ -368,7 +368,7 @@ button.hy-busy::before {
 
 /* ---------- Mobile polish ---------- */
 @media (max-width: 500px) {
-  .card, .login-card { border-radius: 12px !important; }
+  .card, .add-card, .login-card { border-radius: 12px !important; }
   button:hover:not(:disabled) { transform: none; }
 }
 
