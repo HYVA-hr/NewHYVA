@@ -506,6 +506,7 @@
     <div class="container">
         <h2>Daily Attendance</h2>
         <div class="late-warning" id="lateWarning">⚠️ HALF DAY MARKED (Punched in Late)</div>
+        <div id="weekendLockBanner" style="display:none; background: rgba(243,156,18,0.15); color: #f39c12; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-bottom: 15px; border: 1px solid #f39c12;"></div>
         <div class="time-display" id="netTimeDisplay">00:00:00</div>
         <p style="color: #aaa; font-size: 12px; margin-top: -10px;">NET WORKING TIME</p>
         
@@ -1562,6 +1563,63 @@
             renderStaticTimes();
         }
 
+        // ================= NEW: SATURDAY / SUNDAY / HOLIDAY LOCK (after 12:00 PM IST) =================
+        // Clock In / Clock Out are locked after 12:00 PM IST on Saturdays, Sundays and official
+        // holidays. Admin can unlock a specific date (settings/attendance_lock -> unlockedDates).
+        async function getAttendanceLockState(ts) {
+            const ist = new Date(ts + (5.5 * 60 * 60 * 1000));
+            const dateStr = `${ist.getUTCFullYear()}-${String(ist.getUTCMonth() + 1).padStart(2, '0')}-${String(ist.getUTCDate()).padStart(2, '0')}`;
+            const dow = ist.getUTCDay(); // 0 = Sunday, 6 = Saturday
+            if (ist.getUTCHours() < 12) return { locked: false };
+
+            let reason = null;
+            if (dow === 6) reason = "Saturday";
+            else if (dow === 0) reason = "Sunday";
+            if (!reason) {
+                try {
+                    const hSnap = await getDocs(collection(db, "holidays"));
+                    hSnap.forEach(h => {
+                        const hd = h.data();
+                        if (hd.date === dateStr) reason = `Official Holiday (${hd.name || "Holiday"})`;
+                    });
+                } catch (e) {}
+            }
+            if (!reason) return { locked: false };
+
+            try {
+                const lockSnap = await getDoc(doc(db, "settings", "attendance_lock"));
+                if (lockSnap.exists()) {
+                    const unlocked = lockSnap.data().unlockedDates || [];
+                    if (unlocked.includes(dateStr)) return { locked: false, unlockedByAdmin: true };
+                }
+            } catch (e) {}
+
+            return {
+                locked: true,
+                reason: reason,
+                dateStr: dateStr,
+                message: `${reason}: Clock In / Clock Out is locked after 12:00 PM IST. If you need to work today (training etc.), please contact your admin to unlock it.`
+            };
+        }
+
+        async function updateWeekendLockBanner() {
+            try {
+                const banner = document.getElementById("weekendLockBanner");
+                if (!banner) return;
+                const t = getRealTime();
+                const st = await getAttendanceLockState(isFinite(t) ? t : Date.now());
+                if (st.locked) {
+                    banner.innerText = "🔒 " + st.message;
+                    banner.style.display = "block";
+                } else {
+                    banner.style.display = "none";
+                }
+            } catch (e) {}
+        }
+        setTimeout(updateWeekendLockBanner, 3000);
+        setInterval(updateWeekendLockBanner, 60000);
+        document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") updateWeekendLockBanner(); });
+
         // ================= BUTTON ACTIONS (DYNAMIC SHIFT LATE LOGIC ADDED) =================
         ui.clockInBtn.addEventListener('click', async () => {
             try {
@@ -1570,6 +1628,16 @@
                 
                 await syncSecureTime(); 
                 const secureTimestamp = getRealTime();
+
+                // NEW: Saturday / Sunday / Holiday lock (after 12:00 PM IST)
+                const lockStateIn = await getAttendanceLockState(secureTimestamp);
+                if (lockStateIn.locked) {
+                    ui.locStatus.innerText = "";
+                    ui.clockInBtn.disabled = false;
+                    updateWeekendLockBanner();
+                    showCustomConfirm("Attendance Locked", lockStateIn.message, true, "#e74c3c");
+                    return;
+                }
                 const locationData = await getUserLocation();
                 ui.locStatus.innerText = "";
                 
@@ -1640,6 +1708,14 @@
         });
 
         ui.clockOutBtn.addEventListener('click', async () => {
+            // NEW: Saturday / Sunday / Holiday lock (after 12:00 PM IST)
+            await syncSecureTime();
+            const lockStateOut = await getAttendanceLockState(getRealTime());
+            if (lockStateOut.locked) {
+                updateWeekendLockBanner();
+                showCustomConfirm("Attendance Locked", lockStateOut.message, true, "#e74c3c");
+                return;
+            }
             const confirmed = await showCustomConfirm("Clock Out Confirmation", "Are you sure you want to clock out for today?", false, "#e74c3c");
             if (confirmed) {
                 try {
