@@ -1578,17 +1578,14 @@
                 const m = secureDate.getMinutes();
                 let isLate = false;
                 
-                // Check employee's assigned shift for late rules
-                const userShift = window.currentUserData?.shiftTiming || '05:30 PM - 02:30 AM';
-                
-                if (userShift.includes('6:00') || userShift.includes('06:00') || userShift.includes('18:00')) {
-                    if (h > 18 || (h === 18 && m > 0) || h < 12) {
-                        isLate = true;
-                    }
-                } else { // Default to Shift 1
-                    if (h > 17 || (h === 17 && m > 30) || h < 12) {
-                        isLate = true;
-                    }
+                // UPDATED: Common shift for ALL employees = 07:00 PM - 04:00 AM IST.
+                // Punching in after 7:00 PM IST counts as HALF DAY (late).
+                // Time is evaluated in IST explicitly, so it is correct on any device timezone.
+                const istDate = new Date(secureTimestamp + (5.5 * 60 * 60 * 1000));
+                const istH = istDate.getUTCHours();
+                const istM = istDate.getUTCMinutes();
+                if (istH > 19 || (istH === 19 && istM > 0) || istH < 12) {
+                    isLate = true;
                 }
                 
                 attData = { 
