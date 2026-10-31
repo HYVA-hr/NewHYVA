@@ -492,6 +492,14 @@
         <!-- Existing Employees Directory & Block Controls -->
         <div class="card" style="border-top-color: #3498db;">
             <h2 style="color: #3498db; font-size: 20px;">Active & Terminated Employees</h2>
+            <!-- NEW: Bulk Shift Update (one click sets the same shift for ALL employees). -->
+            <!-- Without clicking, every employee keeps the shift saved in their own profile. -->
+            <div style="margin-bottom: 15px;">
+                <p style="color: #aaa; font-size: 13px; margin: 0 0 10px 0;"><strong>Bulk Shift Update</strong> - one click sets the same shift for ALL employees. Don't click anything to keep each employee's own profile shift. Clock-in after the shift start time counts as Half Day.</p>
+                <button type="button" class="submit-btn bulk-shift-btn" id="bulkShift530" data-shift="05:30 PM - 02:30 AM" style="margin-bottom: 8px;">🕠 Set Shift 05:30 PM - 02:30 AM for ALL</button>
+                <button type="button" class="submit-btn bulk-shift-btn" id="bulkShift600" data-shift="06:00 PM - 03:00 AM" style="margin-bottom: 8px;">🕕 Set Shift 06:00 PM - 03:00 AM for ALL</button>
+                <button type="button" class="submit-btn bulk-shift-btn" id="bulkShiftBtn" data-shift="07:00 PM - 04:00 AM">🕖 Set Shift 07:00 PM - 04:00 AM for ALL</button>
+            </div>
             <div id="employeesDirectory">
                 <p style="color: #aaa; text-align: center;">Loading directory...</p>
             </div>
@@ -826,6 +834,43 @@
                 await showCustomConfirm("Error", "Error deleting employee: " + e.message, true, "#e74c3c");
             }
         }
+
+        // --- NEW: Bulk Shift Update - apply one shift timing to ALL employees (admins are skipped) ---
+        document.querySelectorAll(".bulk-shift-btn").forEach((bulkBtn) => {
+            bulkBtn.addEventListener("click", async () => {
+                const NEW_SHIFT = bulkBtn.getAttribute("data-shift");
+                const startTime = NEW_SHIFT.split(" - ")[0];
+                const isConfirmed = await showCustomConfirm(
+                    "Update Shift For Everyone",
+                    `Set the shift of ALL employees to ${NEW_SHIFT} IST? Clock-in after ${startTime} will count as Half Day.`,
+                    false,
+                    "#f39c12"
+                );
+                if (!isConfirmed) return;
+
+                const allBtns = document.querySelectorAll(".bulk-shift-btn");
+                const oldText = bulkBtn.innerText;
+                allBtns.forEach(b => b.disabled = true);
+                bulkBtn.innerText = "Updating all employees...";
+
+                try {
+                    const snap = await getDocs(collection(db, "employees"));
+                    let updated = 0;
+                    for (const d of snap.docs) {
+                        if (d.data().role === "ADMIN") continue;
+                        await updateDoc(doc(db, "employees", d.id), { shiftTiming: NEW_SHIFT });
+                        updated++;
+                    }
+                    await showCustomConfirm("Success", `Shift updated to ${NEW_SHIFT} for ${updated} employees.`, true, "#2ecc71");
+                    fetchEmployeesDirectory();
+                } catch (e) {
+                    await showCustomConfirm("Error", "Error updating shifts: " + e.message, true, "#e74c3c");
+                } finally {
+                    allBtns.forEach(b => b.disabled = false);
+                    bulkBtn.innerText = oldText;
+                }
+            });
+        });
 
         // --- Add New Employee Function ---
         document.getElementById('addEmployeeForm').addEventListener('submit', async (e) => {
