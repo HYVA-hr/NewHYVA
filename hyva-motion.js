@@ -94,4 +94,34 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
+  /* 6. Android app (Capacitor WebView): the relative APK link has nothing to open
+        inside the app, so point it at the website's APK and let the phone's browser
+        handle the download. Website/browser behaviour is untouched. */
+  var APK_URL = 'https://hr-management-app-hyva.vercel.app/HireYourVA.apk';
+  function isNativeApp() {
+    try {
+      if (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function') return window.Capacitor.isNativePlatform();
+      return /; wv\)/.test(navigator.userAgent);
+    } catch (e) { return false; }
+  }
+  function fixApkLink() {
+    try {
+      if (!isNativeApp()) return;
+      var links = document.querySelectorAll('a[href$=".apk"]');
+      for (var i = 0; i < links.length; i++) {
+        (function (a) {
+          if (a.getAttribute('data-hy-apk')) return;
+          a.setAttribute('data-hy-apk', '1');
+          a.setAttribute('href', APK_URL);
+          a.removeAttribute('download');
+          a.addEventListener('click', function (ev) {
+            ev.preventDefault();
+            window.location.href = APK_URL; /* external host -> opens in phone browser */
+          });
+        })(links[i]);
+      }
+    } catch (e) {}
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fixApkLink);
+  else fixApkLink();
 })();
